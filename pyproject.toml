@@ -1,0 +1,63 @@
+[tool.black]
+line-length = 79
+
+[tool.poetry]
+name = "vizdataquality"
+packages = [{ include = "vizdataquality" }]
+version = "0.1rc3"
+description = "Visualize data quality"
+authors = [
+    "Layik Hama <L.Hama@leeds.ac.uk>",
+    "Roy Ruddle <R.A.Ruddle@leeds.ac.uk>",
+]
+readme = "README.md"
+license = "Apache-2.0"
+documentation = "https://vizdataquality.readthedocs.io/en/latest/"
+repository = "https://github.com/royruddle/vizdataquality"
+classifiers = [
+    "Topic :: Scientific/Engineering :: Information Analysis",
+    "Topic :: Scientific/Engineering :: Visualization",
+    "Intended Audience :: Science/Research",
+    "Framework :: Jupyter"
+]
+
+[tool.poetry.dependencies]
+python = ">=3.8,<3.12"
+numpy = "^1.21"
+pandas = "^1.3"
+tomli = "^2.0"
+
+notebook = { version = "^6.4", optional = true }
+matplotlib = { version = "^3.4.3", optional = true }
+Sphinx = { version = "^4.3", optional = true }
+pydata-sphinx-theme = { version = "^0.7", optional = true }
+pytest = { version = "^6.2", optional = true }
+
+[tool.poetry.extras]
+notebooks = ["notebook", "matplotlib"]
+
+# Read the Docs expects this to be named 'doc'.
+# Edit .readthedocs.yaml if changed
+doc = ["Sphinx", "pydata-sphinx-theme"]
+
+test = ["pytest"]
+
+extra = [
+  "notebook",
+  "matplotlib",
+  "Sphinx",
+  "pydata-sphinx-theme",
+  "pytest",
+]
+
+all = [
+  "notebook",
+  "matplotlib",
+  "Sphinx",
+  "pydata-sphinx-theme",
+  "pytest",
+]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

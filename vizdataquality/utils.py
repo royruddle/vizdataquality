@@ -51,7 +51,7 @@ def init_logging(logfile_name, overwrite_output_file=False):
             
         # Multi logging handlers    
         # https://stackoverflow.com/questions/14058453/making-python-loggers-output-all-messages-to-stdout-in-addition-to-log
-        log = logging.getLogger('QCprofiling')
+        log = logging.getLogger('vizdataquality')
         log.setLevel(logging.DEBUG)
         # create formatter and add it to the handlers
         formatter = logging.Formatter('%(asctime)s\t%(pathname)s\t%(module)s\t%(name)s\t%(lineno)s\t%(levelname)s\t%(message)s', datefmt='%d/%m/%Y\t%H:%M:%S')

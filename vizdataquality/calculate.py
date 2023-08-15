@@ -61,6 +61,12 @@ def calc(df, options=None):
     if options is None or options.get('Example value', False):
         cols.append('Example value')
 
+    if options is None or options.get('Number of values', False):
+        cols.append('Number of values')
+
+    if options is None or options.get('Zero values', False):
+        cols.append('Number of zero values')
+
     if options is None or options.get('Missing values', False):
         cols.append('Number of missing values')
 
@@ -71,7 +77,7 @@ def calc(df, options=None):
         for item in ['(min)', '(max)']:
             cols.append('Value lengths ' + item)
     
-    if False and (options is None or options.get('Character pattern', False)):
+    if options is None or options.get('Character pattern', False):
         # Omitted because _get_column_patterns() does not handle some symbols correctly
         cols.append('Patterns')
     
@@ -132,6 +138,7 @@ def _profile_column(series, options=None):
     function_name = '_profile_column()'
     logger = logging.getLogger('vizdataquality')
     logger.debug("%s,column,%s" %(function_name, series.name))
+    num_missing = None
     # NB: series.unique() includes NaT as a value, but series.value_counts() does not
     value_counts = None
 
@@ -150,8 +157,27 @@ def _profile_column(series, options=None):
         # The example is the first value
         output.append(value_counts.index[0])
     
+    if options is None or options.get('Number of values', False):
+        # The number of values that are present
+        num_missing = series.isnull().sum()
+        output.append(len(series) - num_missing)
+    
+    if options is None or options.get('Zero values', False):
+        # The number of values that equal zero
+        if pd.api.types.is_string_dtype(series):
+            num_zero = len(series[series == '0'])
+        else:
+            num_zero = series.eq(0).sum()
+            
+        output.append(num_zero)
+    
     if options is None or options.get('Missing values', False):
-        output.append(series.isnull().sum())
+        
+        if num_missing is None:
+            # Avoid calculating this again
+            num_missing = series.isnull().sum()
+
+        output.append(num_missing)
 
     
     if options is None or options.get('Unique values', False):
@@ -184,7 +210,7 @@ def _profile_column(series, options=None):
         else:
             output = output + ['', '']
     
-    if False and (options is None or options.get('Character pattern', False)):
+    if options is None or options.get('Character pattern', False):
         # Omitted because _get_column_patterns() does not handle some symbols correctly
 
         if value_counts is None:

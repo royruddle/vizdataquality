@@ -29,7 +29,74 @@ import logging
 import traceback
 
 
-##############################################################################    
+# =============================================================================
+# Utility functions
+# =============================================================================
+def get_non_numeric_values(df):
+    """
+    Return a list of the unique, non-numeric values in a dataframe.
+
+    Parameters
+    ----------
+    df : DataFrame
+        The data.
+
+    Returns
+    -------
+    nnv_list : list
+        The unique, non-numeric values.
+
+    """
+    # Create a set containing the non-numeric values
+    non_numeric_values = set()
+
+    for col in df.columns:
+        for item in df[col].unique().tolist():
+            if pd.api.types.is_integer(item) == False:
+                non_numeric_values.add(item)
+
+    # Convert the set to a sorted list
+    nnv_list = list(non_numeric_values)
+    nnv_list.sort()
+    
+    return nnv_list
+
+
+def get_value_lengths_examples(df):
+    """
+    Get examples of the shortest, median and longest values of each column in a dataframe.
+
+    Parameters
+    ----------
+    df : DataFrame
+        The data.
+
+
+    Returns
+    -------
+    df_examples : DataFrame
+        A dataframe containing the examples. The first column ('Examples') specifies what each row contains (e.g., Shortest value).
+
+    """
+    data = {'Examples': ['Shortest value', 'Median value', 'Longest value']}
+    
+    for cc in df.columns:
+        # Get the unique values in this column
+        uu = pd.DataFrame(df[cc].dropna().unique()).rename(columns={0: cc})
+        # Calculate the value lengths
+        uu['Value length'] = uu[cc].apply(lambda x: len(str(x)))
+        uu.sort_values(by=['Value length'], inplace=True)
+
+        data[cc] = [uu.iloc[i][cc] for i in [0, int(len(uu)/2), len(uu)-1]]
+            
+    df_examples = pd.DataFrame.from_dict(data)
+    
+    return df_examples
+
+
+# =============================================================================
+# Main functions
+# =============================================================================
 def calc(df, options=None):
     """
     Profile a data frame or series to calculate aspects of data quality and descriptive statistics.
@@ -44,7 +111,7 @@ def calc(df, options=None):
     Returns
     -------
     df_output : DataFrame
-        The descriptive statistics (rows are the supplied dataframe's variables; columsn are different descriptive statistics).
+        The descriptive statistics (seperate row for each variable; variable names are the index; columns are different descriptive statistics).
 
     """
     function_name = 'calc()'
@@ -74,20 +141,17 @@ def calc(df, options=None):
         cols.append('Number of unique values')
     
     if options is None or options.get('Value lengths', False):
-        for item in ['(min)', '(max)']:
-            cols.append('Value lengths ' + item)
+        cols.append('Value lengths')
     
     if options is None or options.get('Character pattern', False):
         # Omitted because _get_column_patterns() does not handle some symbols correctly
-        cols.append('Patterns')
+        cols.append('Character patterns')
     
     if options is None or options.get('Numeric percentiles', False):
-        for item in ['(min)', '(25th)', '(median)', '(75th)', '(max)']:
-            cols.append('Numeric ' + item)
+        cols.append('Numeric percentiles')
     
     if options is None or options.get('Datetime percentiles', False):
-        for item in ['(min)', '(25th)', '(median)', '(75th)', '(max)']:
-            cols.append('Datetime ' + item)
+        cols.append('Datetime percentiles')
     #
     # Calculate each column's descriptive statistics
     #
@@ -110,6 +174,22 @@ def calc(df, options=None):
     # Create the output dataframe
     #
     df_output = pd.DataFrame(data, columns=cols)
+    # Make the variable names the index
+    df_output.set_index('_column', inplace=True)
+    #
+    # Derive aspects of data quality from the calculations that have just been done.
+    # First, derive the type of uniqueness.
+    #
+    try:
+        df_output['Uniqueness'] = _derive_uniqueness(df_output)
+    except:
+        pass
+
+    # Derive the data type conflict
+    try:
+        df_output['Data type conflict'] = _derive_data_type_conflict(df_output, df)
+    except:
+        pass
 
     et = datetime.datetime.now()
     logger.info("%s,time (s),%s" %(function_name, str((et-st).total_seconds())))
@@ -117,7 +197,113 @@ def calc(df, options=None):
     return df_output
 
 
-##############################################################################
+# =============================================================================
+# Internal functions
+# =============================================================================
+def _apply_uniqueness(row):
+    """
+    DataFrame.apply() function to derive the type of uniqueness from the number of values, missing values and unique values.
+
+    Parameters
+    ----------
+    row : dataframe columns
+        ['Number of values', 'Number of missing values', 'Number of unique values'].
+
+    Returns
+    -------
+    value : string
+        The uniqueness (e.g., 'All unique').
+
+    """
+    
+    nval = row['Number of values']
+    nmiss = row['Number of missing values']
+    nunique = row['Number of unique values']
+    
+    if nval == nmiss:
+        value = 'All missing'
+    elif nval == nunique:
+        value = 'All unique'
+    elif nval - nmiss == nunique:
+        value = 'Unique/Missing'
+    elif nunique == 1:
+        value = 'One value' + ('' if nmiss == 0 else '/Missing')
+    elif nunique == 2:
+        value = 'Binary' + ('' if nmiss == 0 else '/Missing')
+    else:
+        value = 'Other'
+            
+        
+    return value
+
+
+def _derive_uniqueness(df_output):
+    """
+    Derive the type of uniqueness from the number of values, missing values and unique values.
+
+    Parameters
+    ----------
+    df_output : dataframe
+        Dataframe containing the columns ['Number of values', 'Number of missing values', 'Number of unique values'].
+
+    Returns
+    -------
+    A series containing the uniqueness of each record, or None if it cannot be calculated.
+
+    """
+    cols = ['Number of values', 'Number of missing values', 'Number of unique values']
+    
+    if sum([0 if c in df_output.columns else 1 for c in cols]) == 0:
+        # df_output contains all the necessary columns
+        return df_output[cols].apply(lambda row: _apply_uniqueness(row), axis=1)
+    else:
+        return None
+
+
+def _derive_data_type_conflict(df_output, df):
+    """
+    Derive the type of data type conflict from the number of values, missing values and unique values.
+
+    Parameters
+    ----------
+    df_output : dataframe
+        Dataframe containing the columns ['Data type', 'Example value', 'Number of missing values'].
+    df : dataframe
+        The data.
+
+    Returns
+    -------
+    A series containing the data type conflict of each record, or None if it cannot be calculated.
+
+    """
+    # Derive the data type conflict
+    #
+    cols = ['Data type', 'Example value', 'Number of missing values']
+    
+    if sum([0 if c in df_output.columns else 1 for c in cols]) == 0:
+        # df_output contains all the necessary columns
+        values = [None] * len(df_output)
+        l1 = 0
+        
+        for index, row in df_output[cols].iterrows():
+            vv = 'OK'
+            
+            if pd.api.types.is_number(row['Example value']):
+                
+                if row['Data type'] == 'object':
+                    vv = 'Mixed types'
+                elif row['Data type'] == 'float64' and row['Number of missing values'] > 0:
+                    if df[index].sum() == df[index].dropna().apply(lambda x: int(x)).sum():
+                        vv = 'Integer/Missing'
+                
+            values[l1] = vv
+            l1 += 1
+    else:
+        values = None
+        
+    return values
+
+
 def _profile_column(series, options=None):
     """
     Internal function that profiles a data frame column or a series.
@@ -154,8 +340,8 @@ def _profile_column(series, options=None):
         if value_counts is None:
             value_counts = series.value_counts()
         
-        # The example is the first value
-        output.append(value_counts.index[0])
+        # The example is the first value or an empty string if all of the values are missing
+        output.append('' if len(value_counts) == 0 else value_counts.index[0])
     
     if options is None or options.get('Number of values', False):
         # The number of values that are present
@@ -199,16 +385,15 @@ def _profile_column(series, options=None):
             ##min_length = len(str(col_series.values[0]))
             min_length = len(str(value_counts.index[0]))
             max_length = min_length
-            ##for l1 in range(1, len(col_series)):
+
             for ind, val in value_counts.items():
-                ##value_length = len(str(col_series.values[l1]))
                 value_length = len(str(ind))
                 min_length = min(min_length, value_length)
                 max_length = max(max_length, value_length)
     
-            output = output + [min_length, max_length]
+            output.append(','.join([str(x) for x in [min_length, max_length]]))
         else:
-            output = output + ['', '']
+            output.append('')
     
     if options is None or options.get('Character pattern', False):
         # Omitted because _get_column_patterns() does not handle some symbols correctly
@@ -240,24 +425,25 @@ def _profile_column(series, options=None):
     if options is None or options.get('Numeric percentiles', False):
         
         if np.issubdtype(series.dtype, np.number) and not np.issubdtype(series.dtype, np.datetime64):
-            output = output + series.dropna().quantile([0.0, 0.25, 0.5, 0.75, 1.0]).values.tolist()
+            qq = series.dropna().quantile([0.0, 0.25, 0.5, 0.75, 1.0]).values.tolist()
+            output.append(','.join([str(x) for x in qq]))
         else:
-            output = output + ['', '', '', '', '']
+            output.append('')
     
     if options is None or options.get('Datetime percentiles', False):
         
         if np.issubdtype(series.dtype, np.datetime64):
-            quantiles = series.dropna().quantile([0.0, 0.25, 0.5, 0.75, 1.0])#.values.tolist()
-                
-            for ind, val in quantiles.items():
-                output.append(str(val))
+            # Get quantiles and convert them to strings
+            qq = np.datetime_as_string(series.dropna().quantile([0.0, 0.25, 0.5, 0.75, 1.0]).values)
+            # Convert the quantiles into comma-separated strings
+            output.append(','.join([str(x) for x in qq]))
         else:
-            output = output + ['', '', '', '', '']
+            #output = output + ['', '', '', '', '']
+            output.append('')
 
     return output
 
 
-##############################################################################    
 def _get_column_patterns(value_counts, regex_pat_list, pattern_keys, regex_pat_other):
     """
     Finds whether each of the supplied regex patterns occurs anywhere in a series

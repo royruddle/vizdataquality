@@ -7,8 +7,8 @@ packages = [{ include = "vizdataquality" }]
 version = "0.1rc3"
 description = "Visualize data quality"
 authors = [
-    "Layik Hama <L.Hama@leeds.ac.uk>",
     "Roy Ruddle <R.A.Ruddle@leeds.ac.uk>",
+    "Layik Hama <L.Hama@leeds.ac.uk>",
 ]
 readme = "README.md"
 license = "Apache-2.0"

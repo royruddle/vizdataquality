@@ -47,9 +47,9 @@ def test_get_dataset_value_counts_1():
     assert df['Date'].dtype == 'datetime64[ns]'
 
 # Test for invalid input
-# def test_get_dataset_invalid():
-#     with pytest.raises(ValueError):
-#         get_dataset('invalid_option')
+def test_get_dataset_invalid():
+    num_rows, __ = get_dataset('foo')
+    assert num_rows == 0
 
 def test_get_dataset_datetime_1():
     num_rows, df = get_dataset('datetime 1')

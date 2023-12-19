@@ -25,7 +25,7 @@ import matplotlib.pyplot as plt
 # =============================================================================
 # Internal functions
 # =============================================================================
-def _draw_fig(filename, overwrite):
+def _draw_fig(filename, overwrite, **kwargs):
     """
     Internal function, which is called to draw a plot to the screen or save it in a file.
     
@@ -35,6 +35,8 @@ def _draw_fig(filename, overwrite):
         None or a filename for the figure
     overwrite : boolean
         False (do not overwrite file) or True (overwrite file if it exists)
+    **kwargs : dictionary
+        Keyword arguments for fig.savefig().
 
     Returns
     -------
@@ -44,7 +46,7 @@ def _draw_fig(filename, overwrite):
     if filename is not None:
         if overwrite or not os.path.isfile(filename):
             fig=plt.gcf()
-            fig.savefig(filename)
+            fig.savefig(filename, **kwargs)
         elif overwrite == False:
             print('** WARNING ** vizdataquality, plot.py, _draw_fig(): Figure not output because a file with the supplied name already exists.')
             print(filename)
@@ -250,7 +252,7 @@ def apply_perceptual_discontinuity_to_group(input_data, perceptual_threshold):
 # =============================================================================
 # Functions for multiple plots
 # =============================================================================
-def plotgrid(tasktype, data, num_rows=None, num_cols=None, vert=True, xlabels_rotate=0.0, perceptual_threshold=0.05, legend=True, components=None, gap_threshold=None, show_gaps=True, filename=None, overwrite=False, fig_kw={}, ax_kw={}, legend_kw={}, **kwargs):
+def plotgrid(tasktype, data, num_rows=None, num_cols=None, vert=True, xlabels_rotate=0.0, perceptual_threshold=0.05, legend=True, components=None, gap_threshold=None, show_gaps=True, datalabels=False, filename=None, overwrite=False, fig_kw={}, ax_kw={}, legend_kw={}, **kwargs):
     """
     Create a grid of plots of a given type.    
 
@@ -278,6 +280,8 @@ def plotgrid(tasktype, data, num_rows=None, num_cols=None, vert=True, xlabels_ro
         Only used if tasktype is 'datetime distribution': None (threshold will be based on the component of the data; the default) or value (threshold to use). Only used if component is specified.
     show_gaps: boolean
         Only used if tasktype is 'datetime distribution': True (the default) or False (draw lines across gaps). Only used if component is specified.
+    datalabels : boolean
+        Label each data point (False (default) or True)
     filename : string
         None or a filename for the figure
     overwrite : boolean
@@ -329,6 +333,9 @@ def plotgrid(tasktype, data, num_rows=None, num_cols=None, vert=True, xlabels_ro
         # Figure kwargs are applied here
         fig.set(**fig_kw)
 
+        if 'title' in axkwargs and isinstance(axkwargs['title'], str):
+            fig.suptitle(ax_kw['title'])
+            axkwargs['title'] = None
         #
         # Create the plots
         #
@@ -362,7 +369,8 @@ def plotgrid(tasktype, data, num_rows=None, num_cols=None, vert=True, xlabels_ro
                     # If a list of titles is provided then apply the title for this plot
                     kw = 'title'
                     
-                    if kw in ax_kw:
+                    if kw in ax_kw and isinstance(ax_kw[kw], list):
+                        # Need to check whether title is a list, so the suptitle() isn't used
                         axkwargs[kw] = _get_parameter(ax_kw[kw], pnum)
                         
                     # Get rotation for this plot, if a list was provided
@@ -383,7 +391,7 @@ def plotgrid(tasktype, data, num_rows=None, num_cols=None, vert=True, xlabels_ro
                             cnum += 1
                             dnum = 0
                     elif tasktype == 'value counts':
-                        lollipop(plotdata.value_counts(), ax_input=ax, vert=vert, xlabels_rotate=xlabrot, filename=filename, overwrite=overwrite, ax_kw=axkwargs, **kwargs)
+                        lollipop(plotdata.value_counts(), ax_input=ax, vert=vert, xlabels_rotate=xlabrot, datalabels=datalabels, filename=filename, overwrite=overwrite, ax_kw=axkwargs, **kwargs)
                         cnum += 1
                         
                     # Increment the parameter number
@@ -400,7 +408,7 @@ def plotgrid(tasktype, data, num_rows=None, num_cols=None, vert=True, xlabels_ro
         print('** WARNING ** vizdataquality, plot.py, plotgrid(): The tasktype is not valid:', tasktype)
     
     
-def multiplot(plottype, data, perceptual_threshold=0.05, number_of_variables_per_row=None, vert=True, xlabels_rotate=0.0, filename=None, overwrite=False, plt_kw={}, fig_kw={}, ax_kw={}, legend_kw={}, **kwargs):
+def multiplot(plottype, data, perceptual_threshold=0.05, number_of_variables_per_row=None, vert=True, xlabels_rotate=0.0, datalabels=False, filename=None, overwrite=False, plt_kw={}, fig_kw={}, ax_kw={}, legend_kw={}, **kwargs):
     """
     Plot a data quality attribute (e.g., number of missing values in each variable).
     The variables can be plotted on multiple rows of bar charts.
@@ -422,6 +430,8 @@ def multiplot(plottype, data, perceptual_threshold=0.05, number_of_variables_per
         True (vertical bars; the default) or False (horizontal)
     xlabels_rotate : float
         Angle to rotate X axis labels by (only used if vert = True)
+    datalabels : boolean
+        Label each data point (False (default) or True)
     filename : string
         None or a filename for the figure
     overwrite : boolean
@@ -522,7 +532,7 @@ def multiplot(plottype, data, perceptual_threshold=0.05, number_of_variables_per
             elif plottype == 'dot-or-whisker':
                 dot_whisker(data.iloc[start:end], number_of_variables_per_row, ax, vert, xlabels_rotate, filename, overwrite, ax_kw=axkwargs, **kwargs)
             elif plottype == 'lollipop':
-                lollipop(plotdata[start:end], number_of_variables_per_row, ax, vert, xlabels_rotate, filename, overwrite, ax_kw=axkwargs, **kwargs)
+                lollipop(plotdata[start:end], number_of_variables_per_row, ax, vert, xlabels_rotate, datalabels, filename, overwrite, ax_kw=axkwargs, **kwargs)
             elif plottype == 'violin':
                 violinplot(data[data.columns[start:end]], number_of_variables_per_row, ax, vert, xlabels_rotate, filename, overwrite, ax_kw=axkwargs, **kwargs)
 
@@ -708,6 +718,92 @@ def scalar_bar(data, perceptual_threshold=0.05, number_of_variables_per_row=None
         ax.set_yticklabels(xlabels)
         ax.set_ylim(-0.5, num_bars_in_row - 0.5)
         
+    if ax_input is None:
+        _draw_fig(filename, overwrite)
+
+
+def table(data, ax_input=None, include_index=False, auto_column_width=True, filename=None, overwrite=False, fig_kw={}, ax_kw={}, **kwargs):
+    """
+    Plot a table
+
+    Parameters
+    ----------
+    data : series or dataframe
+        Series containing the variable names (index) and data quality attribute to be plotted (e.g., number of missing values in each variable)
+    ax_input: axis or None
+        Matplotlib axis
+    include_index: boolean
+        Include the index in the table (default is False)
+    auto_column_width: boolean
+        Automatically set the widths of the table columns (default is True)
+    filename : string
+        None or a filename for the figure
+    overwrite : boolean
+        False (do not overwrite file; the default) or True (overwrite file if it exists)
+    fig_kw : dictionary
+        Keyword arguments for a Matplotlib Figure object
+    ax_kw : dictionary
+        Keyword arguments for a Matplotlib Axes object
+    kwargs : dictionary
+        Keyword arguments for a Matplotlib Axes.table object. A useful one is loc='center'
+
+    Returns
+    -------
+    None.
+
+    """
+    axkwargs = ax_kw.copy()
+    kw = kwargs.copy()
+    #
+    # Plot axis
+    #
+    if ax_input is None:
+        fig, ax = plt.subplots()#layout='tight')
+        fig.set(**fig_kw)
+        fig.patch.set_visible(False)
+    else:
+        ax = ax_input
+    
+    #hide the axes
+    ax.axis('off')
+    ax.axis('tight')
+
+    ax.set(**axkwargs)
+    
+    # Get the table's data
+    if isinstance(data, pd.Series):
+        if include_index:
+            plotdata = pd.DataFrame(data).reset_index()
+            plotdata.rename(columns={plotdata.columns[0]: 'Variable'}, inplace=True)
+        else:
+            plotdata = data
+    else:
+        # Dataframe
+        if include_index:
+            plotdata = data.reset_index()
+            plotdata.rename(columns={plotdata.columns[0]: 'Variable'}, inplace=True)
+        else:
+            plotdata = data
+
+    if 'cellText' not in kw:
+        kw['cellText'] = plotdata.values
+
+    if 'colLabels' not in kw:
+        if isinstance(plotdata, pd.Series):
+            kw['colLabels'] = [plotdata.name]
+            print('SERIES', plotdata.name)
+        else:
+            kw['colLabels'] = plotdata.columns.tolist()
+
+    #create table
+    table = ax.table(**kw)
+
+    # Options
+    if auto_column_width:
+        table.auto_set_column_width([i for i in range(len(kw['colLabels']))])
+
+    #print(table.get_clip_box())
+
     if ax_input is None:
         _draw_fig(filename, overwrite)
 
@@ -1161,7 +1257,7 @@ def dot_whisker(data, number_of_variables_per_row=None, ax_input=None, vert=True
         _draw_fig(filename, overwrite)
 
 
-def lollipop(data, number_of_variables_per_row=None, ax_input=None, vert=True, xlabels_rotate=0.0, filename=None, overwrite=False, fig_kw={}, ax_kw={}, **kwargs):
+def lollipop(data, number_of_variables_per_row=None, ax_input=None, vert=True, xlabels_rotate=0.0, datalabels=False, filename=None, overwrite=False, fig_kw={}, ax_kw={}, **kwargs):
     """
     Create a lollipop plot (e.g., to show value counts for a variable)
 
@@ -1177,6 +1273,8 @@ def lollipop(data, number_of_variables_per_row=None, ax_input=None, vert=True, x
         True (vertical bars; the default) or False (horizontal)
     xlabels_rotate : float
         Angle to rotate X axis labels by (only used if vert = True)
+    datalabels : boolean
+        Label each data point (False (default) or True)
     filename : string
         None or a filename for the figure
     overwrite : boolean
@@ -1301,6 +1399,14 @@ def lollipop(data, number_of_variables_per_row=None, ax_input=None, vert=True, x
                 axkwargs['ylabel'] = 'Value'
     
             ax.set(**axkwargs)
+            
+            if datalabels:
+                # This is a hack, btu it works for default-sized markers
+                limits = ax.get_xlim()
+                offset = (limits[1] - limits[0]) / 50.0
+
+                for l1 in range(len(dotx)):
+                    ax.text(doty[l1] + offset, dotx[l1], str(doty[l1]), horizontalalignment='left', verticalalignment='center')
             
             if numerical_values:
                 ax.set_ylim(plotdata.index.min()-0.5, plotdata.index.max()+0.5)
@@ -1534,7 +1640,9 @@ def datetime_counts(data, component=None, gap_threshold=None, show_gaps=True, ax
                 ax.tick_params('x', labelrotation=xlabels_rotate)
             
             if component is not None and comp == 'year':
-                ax.xaxis.set_major_locator(mpl.ticker.MaxNLocator(integer=True))
+                # Now commented out because it sometimes causes too many tick labels
+                #ax.xaxis.set_major_locator(mpl.ticker.MaxNLocator(integer=True))
+                ax.xaxis.set_major_formatter(mpl.ticker.FuncFormatter(lambda x, p: format(int(x))))
             
             if xinterval is not None:
                 ax.xaxis.set_major_locator(mpl.ticker.MultipleLocator(xinterval))
@@ -1542,7 +1650,9 @@ def datetime_counts(data, component=None, gap_threshold=None, show_gaps=True, ax
             ax.set_xticks(range(len(xticklabels)))
             ax.set_xticklabels(xticklabels, rotation=xlabels_rotate)
     
-        ax.yaxis.set_major_locator(mpl.ticker.MaxNLocator(integer=True))
+        # Now commented out because it sometimes causes too many tick labels
+        #ax.yaxis.set_major_locator(mpl.ticker.MaxNLocator(integer=True))
+        ax.yaxis.set_major_formatter(mpl.ticker.FuncFormatter(lambda x, p: format(int(x), ',')))
     else:
         print('** WARNING ** vizdataquality, plot.py, datetime_counts(): No variables to be plotted.')
                 

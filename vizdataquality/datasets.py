@@ -15,7 +15,7 @@ Created on Wed Jul 19 04:43:43 2023
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-   
+
 """
 
 import pandas as pd
@@ -41,8 +41,8 @@ def get_dataset(option):
     Number of rows in the dataset and a dataframe containing it.
 
     """
-    df = None
-    
+    df = pd.DataFrame()
+
     if option == 'simple':
         data = {}
         data['String'] = ['a'] * 3 + ['0'] * 3 + ['B1234'] * 2 + [np.nan] * 2
@@ -69,25 +69,25 @@ def get_dataset(option):
         df = pd.DataFrame.from_dict(data)
     elif option == 'numeric 1':
         data = {}
-        
+
         for l1 in range(1, 6):
             data['Numeric' + str(l1)] = [x for x in range(0, 10)]
-            
+
         df = pd.DataFrame.from_dict(data)
     elif option == 'date 1':
         data = {}
-        
+
         for l1 in range(1, 6):
             data['Date' + str(l1)] = [datetime.date(x, 1, 1) for x in range(2000, 2010)]
-            
+
         df = pd.DataFrame.from_dict(data).apply(pd.to_datetime)
     elif option == 'time 1':
         data = {}
         customdate = datetime.datetime(2000, 1, 1, 0, 0)
-        
+
         for l1 in range(1, 6):
             data['Time' + str(l1)] = [customdate + datetime.timedelta(hours=i) for i in range(0, 24)]
-            
+
         df = pd.DataFrame.from_dict(data)#.apply(pd.to_datetime)
     elif option == 'datetime 1':
         data = {}
@@ -102,11 +102,11 @@ def get_dataset(option):
                         # Every 30 seconds
                         for seconds in [0, 30]:
                             array.append(datetime.datetime(2022, 9, 1, hour, minute, seconds) + datetime.timedelta(day))
-        
+
         data['Date'] = array
 
         #data['Date'] = [datetime.date(x, 1, 1) for x in range(2000, 2010)]
-            
+
         df = pd.DataFrame.from_dict(data).apply(pd.to_datetime)
     elif option == 'value counts 1':
         data = {}
@@ -120,6 +120,5 @@ def get_dataset(option):
         #print(df.astype({'Categorical (ints)': 'object'}).dtypes)
         df = df0.astype({'Categorical (ints)': 'object'})
         df['Date'] = pd.to_datetime(df['Date'], yearfirst=True)
-        
+
     return len(df), df
-    

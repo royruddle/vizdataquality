@@ -220,7 +220,7 @@ def _apply_uniqueness(row):
     nmiss = row['Number of missing values']
     nunique = row['Number of unique values']
     
-    if nval == nmiss:
+    if nval == 0 or nval == nmiss:
         value = 'All missing'
     elif nval == nunique:
         value = 'All unique'

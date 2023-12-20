@@ -252,7 +252,7 @@ def apply_perceptual_discontinuity_to_group(input_data, perceptual_threshold):
 # =============================================================================
 # Functions for multiple plots
 # =============================================================================
-def plotgrid(tasktype, data, num_rows=None, num_cols=None, vert=True, xlabels_rotate=0.0, perceptual_threshold=0.05, legend=True, components=None, gap_threshold=None, show_gaps=True, datalabels=False, filename=None, overwrite=False, fig_kw={}, ax_kw={}, legend_kw={}, **kwargs):
+def plotgrid(tasktype, data, num_rows=None, num_cols=None, vert=True, xlabels_rotate=0.0, perceptual_threshold=0.05, legend=True, components='raw data', gap_threshold=None, show_gaps=True, datalabels=False, filename=None, overwrite=False, fig_kw={}, ax_kw={}, legend_kw={}, **kwargs):
     """
     Create a grid of plots of a given type.    
 
@@ -274,8 +274,8 @@ def plotgrid(tasktype, data, num_rows=None, num_cols=None, vert=True, xlabels_ro
         Preceptual discontinuity threshold (0.0 - 1.0) or None
     legend: boolean
         True (add a legend, if a stacked bar chart is plotted) or False (no legend)
-    components : list, string or None
-        Only used if tasktype is 'datetime distribution': Component(s) to plot ('year', 'month', 'dayofweek', 'hour', 'minute' or 'second'; case independent) or None (plot the data)
+    components : list or string
+        Only used if tasktype is 'datetime distribution': Component(s) to plot ('year', 'month', 'dayofweek', 'hour', 'minute' or 'second'; case independent) or 'raw data' (default)
     gap_threshold: None, int or datetime
         Only used if tasktype is 'datetime distribution': None (threshold will be based on the component of the data; the default) or value (threshold to use). Only used if component is specified.
     show_gaps: boolean
@@ -1435,7 +1435,7 @@ def lollipop(data, number_of_variables_per_row=None, ax_input=None, vert=True, x
         _draw_fig(filename, overwrite)
 
 
-def datetime_counts(data, component=None, gap_threshold=None, show_gaps=True, ax_input=None, xlabels_rotate=0.0, filename=None, overwrite=False, fig_kw={}, ax_kw={}, **kwargs):
+def datetime_counts(data, component='raw data', gap_threshold=None, show_gaps=True, ax_input=None, xlabels_rotate=0.0, filename=None, overwrite=False, fig_kw={}, ax_kw={}, **kwargs):
     """
     Plot the overall distribution of a datetime variable, or the distribution of a specific component (e.g., month).
 
@@ -1443,8 +1443,8 @@ def datetime_counts(data, component=None, gap_threshold=None, show_gaps=True, ax
     ----------
     data : series
         Series containing the variable names (index) and data quality attribute to be plotted (e.g., number of missing values in each variable)
-    component : string or None
-        Component to plot ('year', 'month', 'dayofweek', 'hour', 'minute' or 'second'; case independent) or None (plot the data)
+    component : string
+        Component to plot ('year', 'month', 'dayofweek', 'hour', 'minute' or 'second'; case independent) or 'raw data' (default)
     gap_threshold: None, int or datetime
         None (threshold will be based on the component of the data; the default) or value (threshold to use). Only used if component is specified.
     show_gaps: boolean
@@ -1469,192 +1469,229 @@ def datetime_counts(data, component=None, gap_threshold=None, show_gaps=True, ax
     None.
 
     """
-    axkwargs = ax_kw.copy()
-    kw = kwargs.copy()
-    
-    if 'color' not in kw:
-        # Use the first color
-        kw['color'] = plt.rcParams['axes.prop_cycle'].by_key()['color'][0]
-
-    # Calculate the number of times each value occurs, sort them and store the result in a data frame
-    #value_counts = data.value_counts().to_frame().reset_index().rename(columns={'index': 'Value', data.name: 'Count'})
-    #value_counts = data.value_counts().sort_index().to_frame().reset_index().rename(columns={data.name: 'Value', 'count': 'Count'})
-    value_counts = data.value_counts().sort_index().to_frame().reset_index()
-    cols = value_counts.columns
-    # The dataframe's first column contains the values and the second column contains the count
-    value_counts.rename(columns={cols[0]: 'Value', cols[1]: 'Count'}, inplace=True)
-    gthresh = 1 if gap_threshold is None else gap_threshold
-    xticklabels = None
-    xinterval = None
-    #xinteger_component = False
-    
-    if component is None:
-        # Plot the raw data
-        xlabel = data.name
-
-        # The width of the plot in pixels
-        num_pixels = plt.rcParams['figure.figsize'][0] * plt.rcParams['figure.dpi']
-        # Max number of unique values to be plotted
-        max_unique = int(num_pixels / 5)
+    if len(data) == 0:
+        print('** WARNING ** vizdataquality, plot.py, datetime_counts(): There is no data to be plotted.')
+    elif component.lower() in ['raw data', 'year', 'month', 'dayofweek', 'hour', 'minute', 'second']:
+        axkwargs = ax_kw.copy()
+        kw = kwargs.copy()
         
-        if len(value_counts) > max_unique:
-            # Try to find a coarser datetime granularity
-            granularity = None
-            
-            for u in ['Y', 'M', 'D', 'h', 'm', 's']:
-                s = value_counts['Value'].apply(lambda x: np.datetime64(x, u))
-                #if len(value_counts['Value'].apply(lambda x: np.datetime64(x, u)).unique()) <= max_unique:
-                if len(s.unique()) <= max_unique:
-                    value_counts['Value2'] = s
-                    granularity = u
-                else:
-                    # Too fine grained
-                    break
-                    
-            if granularity is not None:
-                #value_counts['Value2'] = value_counts['Value'].apply(lambda x: np.datetime64(x, granularity))
-                grouped = value_counts[['Value2', 'Count']].groupby('Value2', sort=True)['Count'].sum().reset_index()
-                value_counts = grouped.rename(columns={'Value2': 'Value'})
-                
-        xmin = value_counts['Value'].min()
-        xmax = value_counts['Value'].max()
-    else:
+        if 'color' not in kw:
+            # Use the first color
+            kw['color'] = plt.rcParams['axes.prop_cycle'].by_key()['color'][0]
+    
+        # Calculate the number of times each value occurs, sort them and store the result in a data frame
+        #value_counts = data.value_counts().to_frame().reset_index().rename(columns={'index': 'Value', data.name: 'Count'})
+        #value_counts = data.value_counts().sort_index().to_frame().reset_index().rename(columns={data.name: 'Value', 'count': 'Count'})
+        value_counts = data.value_counts().sort_index().to_frame().reset_index()
+        cols = value_counts.columns
+        # The dataframe's first column contains the values and the second column contains the count
+        value_counts.rename(columns={cols[0]: 'Value', cols[1]: 'Count'}, inplace=True)
+        gthresh = 1 if gap_threshold is None else gap_threshold
+        xticklabels = None
+        xinterval = None
+        #xinteger_component = False
+
         comp = component.lower()
         xlabel = comp[0].upper() + comp[1:]
-        #plot_component = True
-        xmin = 0
         
-        if comp == 'year':
-            value_counts['Part'] = value_counts['Value'].dt.year
-            xmin = value_counts['Part'].min()
-            xmax = value_counts['Part'].max()
-            #xinteger_component= True
-        elif comp == 'month':
-            value_counts['Part'] = value_counts['Value'].dt.month
-            xmin = 1
-            xmax = 12
-            xticklabels = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-        elif comp == 'dayofweek':
-            value_counts['Part'] = value_counts['Value'].dt.dayofweek
-            xmax = 6
-            xlabel = 'Day of the week'
-            xticklabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
-        elif comp == 'hour':
-            value_counts['Part'] = value_counts['Value'].dt.hour
-            xmax = 24#23
-            xinterval = 6
-            #xticklabels = [i for i in range(0, xmax+1, 6)]
-            #xinteger_component= True
-        elif comp == 'minute':
-            value_counts['Part'] = value_counts['Value'].dt.minute
-            xmax = 60#59
-            xinterval = 15
-            #xinteger_component= True
-        elif comp == 'second':
-            value_counts['Part'] = value_counts['Value'].dt.second
-            xmax = 60#59
-            xinterval = 15
-            #xinteger_component= True
-    
-        # Adjust the min/max to leave a space at both ends of the X axis
-        xmin -= 0.5
-        xmax += 0.5
+        if comp == 'raw data':
+            # The width of the plot in pixels
+            num_pixels = plt.rcParams['figure.figsize'][0] * plt.rcParams['figure.dpi']
+            # Max number of unique values to be plotted
+            max_unique = int(num_pixels / 5)
             
-        # Calculate the number of times each value of Part occurs
-        groups = value_counts.groupby('Part')['Count'].sum().sort_index()
-        
-    # Set the default axis labels if none have been supplied as ax_kw
-    if 'xlabel' not in axkwargs:
-        axkwargs['xlabel'] = xlabel
-    #
-    # Plot axis
-    #
-    if ax_input is None:
-        fig, ax = plt.subplots()
-        fig.set(**fig_kw)
-        fig.autofmt_xdate()
-    else:
-        ax = ax_input
-
-    if 'xlim' not in axkwargs:
-        axkwargs['xlim'] = (xmin, xmax)
-
-    if 'ylim' not in axkwargs:
-        axkwargs['ylim'] = 0
-
-    if 'ylabel' not in axkwargs:
-        axkwargs['ylabel'] = 'Count'
-
-    if component is None or len(groups) > 0:
-        
-        if component is not None and show_gaps:
-            # The first item
-            x = [groups.index[0]]
-            y = [groups.values[0]]
-            
-            for index, value in groups.iloc[1:].items():
-                # Iterate over the other items
-                if index <= x[-1] + gthresh:
-                    # This item is part of a continuous sequence of months, etc. 
-                    x.append(index)
-                    y.append(value)
-                else:
-                    if len(x) == 1:
-                        # Plot a point (the last item was discrete)
-                        ax.scatter(x, y, **kw)
-                    elif len(x) >= 2:
-                        # Plot a polyline (the last item(s) were in a sequence)
-                        ax.plot(x, y, **kw)
-                        
-                    x = [index]
-                    y = [value]
-    
-            # Plot any remaining data
-            if len(x) == 1:
-                # Plot a point
-                ax.scatter(x, y, **kw)
-            elif len(x) >= 2:
-                # Plot a polyline
-                ax.plot(x, y, **kw)
-        else:
-            # Plot the value counts without showing any gaps
-            if component is None:
-                x = value_counts['Value']
-                y = value_counts['Count']
-            else:
-                x = groups.index
-                y = groups.values
+            if len(value_counts) > max_unique:
+                # Try to find a coarser datetime granularity
+                granularity = None
                 
-            if len(x) == 1:
-                # A single point
-                ax.scatter(x, y, **kw)
-            else:
-                # Line chart
-                ax.plot(x, y, **kw)
-            
-        ax.set(**axkwargs)
-        
-        if xticklabels is None:
-            #ax.xaxis.set_major_locator(mpl.ticker.MaxNLocator(integer=True))
-            if abs(xlabels_rotate) > 0.0:
-                ax.tick_params('x', labelrotation=xlabels_rotate)
-            
-            if component is not None and comp == 'year':
-                # Now commented out because it sometimes causes too many tick labels
-                #ax.xaxis.set_major_locator(mpl.ticker.MaxNLocator(integer=True))
-                ax.xaxis.set_major_formatter(mpl.ticker.FuncFormatter(lambda x, p: format(int(x))))
-            
-            if xinterval is not None:
-                ax.xaxis.set_major_locator(mpl.ticker.MultipleLocator(xinterval))
+                for u in ['Y', 'M', 'D', 'h', 'm', 's']:
+                    s = value_counts['Value'].apply(lambda x: np.datetime64(x, u))
+                    #if len(value_counts['Value'].apply(lambda x: np.datetime64(x, u)).unique()) <= max_unique:
+                    if len(s.unique()) <= max_unique:
+                        value_counts['Value2'] = s
+                        granularity = u
+                    else:
+                        # Too fine grained
+                        break
+                        
+                if granularity is not None:
+                    #value_counts['Value2'] = value_counts['Value'].apply(lambda x: np.datetime64(x, granularity))
+                    grouped = value_counts[['Value2', 'Count']].groupby('Value2', sort=True)['Count'].sum().reset_index()
+                    value_counts = grouped.rename(columns={'Value2': 'Value'})
+                    
+            xmin = value_counts['Value'].min()
+            xmax = value_counts['Value'].max()
         else:
-            ax.set_xticks(range(len(xticklabels)))
-            ax.set_xticklabels(xticklabels, rotation=xlabels_rotate)
+            # Plot a component (e.g., 'year')
+            xmin = 0
+            
+            if comp == 'year':
+                value_counts['Part'] = value_counts['Value'].dt.year
+                xmin = value_counts['Part'].min()
+                xmax = value_counts['Part'].max()
+                
+                if xmax - xmin <= 0.0:
+                    # The data is only for a single year, so make the X axis span 3 years
+                    #xticklabels = [xmin]
+                    xmin -= 0.5
+                    xmax += 0.5
+                #xinteger_component= True
+            elif comp == 'month':
+                # Months are 1 (Jan) - 12 (Dec)
+                value_counts['Part'] = value_counts['Value'].dt.month
+                xmin = 1
+                xmax = 12
+                xticklabels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+            elif comp == 'dayofweek':
+                # Days of the week are 0 (Mon) - 6 (Sun)
+                value_counts['Part'] = value_counts['Value'].dt.dayofweek
+                xmax = 6
+                xlabel = 'Day of the week'
+                xticklabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+            elif comp == 'hour':
+                value_counts['Part'] = value_counts['Value'].dt.hour
+                xmax = 24#23
+                xinterval = 6
+                #xticklabels = [i for i in range(0, xmax+1, 6)]
+                #xinteger_component= True
+            elif comp == 'minute':
+                value_counts['Part'] = value_counts['Value'].dt.minute
+                xmax = 60#59
+                xinterval = 15
+                #xinteger_component= True
+            elif comp == 'second':
+                value_counts['Part'] = value_counts['Value'].dt.second
+                xmax = 60#59
+                xinterval = 15
+                #xinteger_component= True
+        
+            # Adjust the min/max to leave a space at both ends of the X axis
+            #xmin -= 0.5
+            #xmax += 0.5
+                
+            # Calculate the number of times each value of Part occurs
+            groups = value_counts.groupby('Part')['Count'].sum().sort_index()
+            
+        # Set the default axis labels if none have been supplied as ax_kw
+        if 'xlabel' not in axkwargs:
+            axkwargs['xlabel'] = xlabel
+        #
+        # Plot axis
+        #
+        if ax_input is None:
+            fig, ax = plt.subplots()
+            fig.set(**fig_kw)
+            fig.autofmt_xdate()
+        else:
+            ax = ax_input
     
-        # Now commented out because it sometimes causes too many tick labels
-        #ax.yaxis.set_major_locator(mpl.ticker.MaxNLocator(integer=True))
-        ax.yaxis.set_major_formatter(mpl.ticker.FuncFormatter(lambda x, p: format(int(x), ',')))
+        if 'xlim' not in axkwargs:
+            axkwargs['xlim'] = (xmin, xmax)
+    
+        if 'ylim' not in axkwargs:
+            axkwargs['ylim'] = 0
+    
+        if 'ylabel' not in axkwargs:
+            axkwargs['ylabel'] = 'Count'
+    
+        if comp == 'raw data' or len(groups) > 0:
+            
+            if comp != 'raw data' and show_gaps:
+                # The first item
+                x = [groups.index[0]]
+                y = [groups.values[0]]
+                
+                for index, value in groups.iloc[1:].items():
+                    # Iterate over the other items
+                    if index <= x[-1] + gthresh:
+                        # This item is part of a continuous sequence of months, etc. 
+                        x.append(index)
+                        y.append(value)
+                    else:
+                        if len(x) == 1:
+                            # Plot a point (the last item was discrete)
+                            ax.scatter(x, y, **kw)
+                        elif len(x) >= 2:
+                            # Plot a polyline (the last item(s) were in a sequence)
+                            ax.plot(x, y, **kw)
+                            
+                        x = [index]
+                        y = [value]
+        
+                # Plot any remaining data
+                if len(x) == 1:
+                    # Plot a point
+                    ax.scatter(x, y, **kw)
+                elif len(x) >= 2:
+                    # Plot a polyline
+                    ax.plot(x, y, **kw)
+            else:
+                # Plot the value counts without showing any gaps
+                if comp == 'raw data':
+                    x = value_counts['Value']
+                    y = value_counts['Count']
+                else:
+                    x = groups.index
+                    y = groups.values
+                    
+                if len(x) == 1:
+                    # A single point
+                    ax.scatter(x, y, **kw)
+                else:
+                    # Line chart
+                    ax.plot(x, y, **kw)
+
+            ax.set(**axkwargs)
+            
+            if xticklabels is None:
+                #ax.xaxis.set_major_locator(mpl.ticker.MaxNLocator(integer=True))
+                if True or abs(xlabels_rotate) > 0.0:
+                    # Set to true because Matplotlib otherwise rotates the labels automatically
+                    ax.tick_params('x', labelrotation=xlabels_rotate)
+                
+                if comp == 'year':
+                    # Now commented out because it sometimes causes too many tick labels
+                    #ax.xaxis.set_major_locator(mpl.ticker.MaxNLocator(integer=True))
+                    
+                    # If there is a small range of years then Matplotlib's tick labels may include decimals
+                    xlabs = ax.get_xticklabels()
+                    new_ticks = []
+                    new_labels = []
+                    # Loop over the tick labels, appending only integer labels
+                    for xl in xlabs:
+                        try:
+                            fval = float(xl.get_text())
+                            ival = int(fval)
+                            if abs(fval - ival) <= 0:
+                                # Integer label
+                                new_ticks.append(ival)
+                                new_labels.append(str(ival))
+                        except:
+                            raise
+                            
+                    # Specify the new, integer-only labels
+                    ax.set_xticks(new_ticks, new_labels, rotation=xlabels_rotate)
+                    # Commented out because all the labels will now be integers
+                    #ax.xaxis.set_major_formatter(mpl.ticker.FuncFormatter(lambda x, p: format(int(x))))
+                
+                if xinterval is not None:
+                    ax.xaxis.set_major_locator(mpl.ticker.MultipleLocator(xinterval))
+            else:
+                #ax.set_xticks(range(len(xticklabels)))
+                #ax.set_xticklabels(xticklabels, rotation=xlabels_rotate)
+                if comp == 'year' and len(xticklabels) == 1:
+                    ax.set_xticks(range(xticklabels[0], xticklabels[0]+1), xticklabels, rotation=xlabels_rotate)
+                else:
+                    # xmin used in range because months start from 1, whereas days of the week start from 0
+                    ax.set_xticks(range(xmin, xmin+len(xticklabels)), xticklabels, rotation=xlabels_rotate)
+        
+            # Now commented out because it sometimes causes too many tick labels
+            #ax.yaxis.set_major_locator(mpl.ticker.MaxNLocator(integer=True))
+            ax.yaxis.set_major_formatter(mpl.ticker.FuncFormatter(lambda x, p: format(int(x), ',')))
+        else:
+            print('** WARNING ** vizdataquality, plot.py, datetime_counts(): No variables to be plotted.')
     else:
-        print('** WARNING ** vizdataquality, plot.py, datetime_counts(): No variables to be plotted.')
+        print('** WARNING ** vizdataquality, plot.py, datetime_counts(): Invalid component:', component)
                 
     if ax_input is None:
         _draw_fig(filename, overwrite)

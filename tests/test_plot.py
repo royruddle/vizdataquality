@@ -19,15 +19,15 @@ def test_datetime_counts_component():
     datetime_counts(data, component='month')
     plt.close('all')
 
-# # Test with gap_threshold parameter
-# def test_datetime_counts_gap_threshold():
-#     datetime_counts(data7d, component='day', gap_threshold=10)
-#     plt.close('all')
+# Test with gap_threshold parameter
+def test_datetime_counts_gap_threshold():
+    datetime_counts(data7d, component='day', gap_threshold=10)
+    plt.close('all')
 
-# # Test the show_gaps functionality
-# def test_datetime_counts_show_gaps():
-#     datetime_counts(data7d, component='day', show_gaps=False)
-#     plt.close('all')
+# Test the show_gaps functionality
+def test_datetime_counts_show_gaps():
+    datetime_counts(data7d, component='day', show_gaps=False)
+    plt.close('all')
 
 # Test with custom axis input
 def test_datetime_counts_custom_axis():
@@ -57,13 +57,13 @@ def test_datetime_counts_overwrite_file():
     os.remove(test_filename)
 
 # Test with empty data
-#def test_datetime_counts_empty_data():
-#    data = pd.Series([])
-#    datetime_counts(data)
-#    plt.close('all')
+def test_datetime_counts_empty_data():
+    data = pd.Series([])
+    datetime_counts(data)
+    plt.close('all')
 
 # Test with invalid component
-#def test_datetime_counts_invalid_component():
-#    with pytest.raises(ValueError):
-#        datetime_counts(data, component='invalid_component')
-#    plt.close('all')
+def test_datetime_counts_invalid_component():
+    #with pytest.raises(ValueError):
+    datetime_counts(data, component='invalid_component')
+    plt.close('all')

@@ -97,7 +97,7 @@ def apply_perceptual_discontinuity_individually(input_data, perceptual_threshold
         The data
     perceptual_threshold : float
         An absolute value (axis_limits = None) or a percentage (0.0 - 1.0) of the axis limit max
-    axis_limits : None or (min, max) tuple
+    axis_limits : None, int, float or (min, max) tuple
         The axis limits
 
     Returns
@@ -111,7 +111,8 @@ def apply_perceptual_discontinuity_individually(input_data, perceptual_threshold
     # Finer-grained distinction
     #legend_labels = []
     
-    if axis_limits is None:
+    if axis_limits is None or not isinstance(axis_limits, tuple):
+        # The value of perceptual_threshold is used
         val1 = perceptual_threshold
         
         if type(input_data) is pd.Series:
@@ -142,6 +143,7 @@ def apply_perceptual_discontinuity_individually(input_data, perceptual_threshold
             data = input_data.apply(lambda x: x if x <= 0 else max(x, val1))
             
     else:
+        # The threshold is perceptual_threshold * axis_limits[1]
         max_value = axis_limits[1]
         val1 = perceptual_threshold*max_value
         val2 = (1.0-perceptual_threshold)*max_value
@@ -252,7 +254,7 @@ def apply_perceptual_discontinuity_to_group(input_data, perceptual_threshold):
 # =============================================================================
 # Functions for multiple plots
 # =============================================================================
-def plotgrid(tasktype, data, num_rows=None, num_cols=None, vert=True, xlabels_rotate=0.0, perceptual_threshold=0.05, legend=True, components='raw data', gap_threshold=None, show_gaps=True, datalabels=False, filename=None, overwrite=False, fig_kw={}, ax_kw={}, legend_kw={}, **kwargs):
+def plotgrid(tasktype, data, num_rows=None, num_cols=None, vert=True, xlabels_rotate=0.0, perceptual_threshold=0.05, legend=True, components='raw data', gap_threshold=None, show_gaps=True, datalabels=False, continuous_value_axis=True, filename=None, overwrite=False, fig_kw={}, ax_kw={}, legend_kw={}, **kwargs):
     """
     Create a grid of plots of a given type.    
 
@@ -282,6 +284,8 @@ def plotgrid(tasktype, data, num_rows=None, num_cols=None, vert=True, xlabels_ro
         Only used if tasktype is 'datetime distribution': True (the default) or False (draw lines across gaps). Only used if component is specified.
     datalabels : boolean
         Label each data point (False (default) or True)
+    continuous_value_axis : boolean
+        Plot numerical/datetime values on a continuous axis to show any gaps in values. The default is True.
     filename : string
         None or a filename for the figure
     overwrite : boolean
@@ -379,6 +383,7 @@ def plotgrid(tasktype, data, num_rows=None, num_cols=None, vert=True, xlabels_ro
                     # This check is made because the grid may contain more cells than there are dataframe columns
                     if tasktype == 'scalars':
                         scalar_bar(plotdata, ax_input=ax, vert=vert, xlabels_rotate=xlabrot, perceptual_threshold=perceptual_threshold, legend=legend, filename=filename, overwrite=overwrite, ax_kw=axkwargs, legend_kw={}, **kwargs)
+                        
                         cnum += 1
                     elif tasktype == 'datetime distribution':
                         datetime_counts(plotdata, ax_input=ax, xlabels_rotate=xlabrot, component=comps[dnum], gap_threshold=gap_threshold, show_gaps=show_gaps, filename=filename, overwrite=overwrite, ax_kw=axkwargs, **kwargs)
@@ -391,7 +396,7 @@ def plotgrid(tasktype, data, num_rows=None, num_cols=None, vert=True, xlabels_ro
                             cnum += 1
                             dnum = 0
                     elif tasktype == 'value counts':
-                        lollipop(plotdata.value_counts(), ax_input=ax, vert=vert, xlabels_rotate=xlabrot, datalabels=datalabels, filename=filename, overwrite=overwrite, ax_kw=axkwargs, **kwargs)
+                        lollipop(plotdata.value_counts(), ax_input=ax, vert=vert, xlabels_rotate=xlabrot, datalabels=datalabels, continuous_value_axis=continuous_value_axis, filename=filename, overwrite=overwrite, ax_kw=axkwargs, **kwargs)
                         cnum += 1
                         
                     # Increment the parameter number
@@ -408,7 +413,7 @@ def plotgrid(tasktype, data, num_rows=None, num_cols=None, vert=True, xlabels_ro
         print('** WARNING ** vizdataquality, plot.py, plotgrid(): The tasktype is not valid:', tasktype)
     
     
-def multiplot(plottype, data, perceptual_threshold=0.05, number_of_variables_per_row=None, vert=True, xlabels_rotate=0.0, datalabels=False, filename=None, overwrite=False, plt_kw={}, fig_kw={}, ax_kw={}, legend_kw={}, **kwargs):
+def multiplot(plottype, data, perceptual_threshold=0.05, number_of_variables_per_row=None, vert=True, xlabels_rotate=0.0, datalabels=False, continuous_value_axis=True, filename=None, overwrite=False, plt_kw={}, fig_kw={}, ax_kw={}, legend_kw={}, **kwargs):
     """
     Plot a data quality attribute (e.g., number of missing values in each variable).
     The variables can be plotted on multiple rows of bar charts.
@@ -432,6 +437,8 @@ def multiplot(plottype, data, perceptual_threshold=0.05, number_of_variables_per
         Angle to rotate X axis labels by (only used if vert = True)
     datalabels : boolean
         Label each data point (False (default) or True)
+    continuous_value_axis : boolean
+        Plot numerical/datetime values on a continuous axis to show any gaps in values. The default is True.
     filename : string
         None or a filename for the figure
     overwrite : boolean
@@ -445,7 +452,7 @@ def multiplot(plottype, data, perceptual_threshold=0.05, number_of_variables_per
     legend_kw : dictionary
         Keyword arguments for a Matplotlib legend. Only used if plottype = 'bar'
     kwargs : dictionary
-        Keyword arguments for a Matplotlib Axes.bar object
+        Keyword arguments for a Matplotlib Axes.bar (scalarbar), Axes.bxp (boxplot), Axes.scatter and Axes.errorbar (dot_whisker), Axes.scatter and Axes.plot (lollipop) or violinplot object (violin)
 
     Returns
     -------
@@ -490,9 +497,10 @@ def multiplot(plottype, data, perceptual_threshold=0.05, number_of_variables_per
             else:
                 default_axis_label = data.name
                 
-            fig.supxlabel(axkwargs.get('xlabel', 'Variable' if vert else default_axis_label))
+            label1 = 'Value' if plottype == 'lollipop' else 'Variable'
+            fig.supxlabel(axkwargs.get('xlabel', label1 if vert else default_axis_label))
             axkwargs['xlabel'] = None
-            fig.supylabel(axkwargs.get('ylabel', default_axis_label if vert else 'Variable'))
+            fig.supylabel(axkwargs.get('ylabel', default_axis_label if vert else label1))
             axkwargs['ylabel'] = None
         #
         # Sort the values if plotting value counts
@@ -526,15 +534,15 @@ def multiplot(plottype, data, perceptual_threshold=0.05, number_of_variables_per
             if plottype == 'bar':
                 # Add the legend to the first subplot
                 legend = True if l1 == 0 else False
-                scalar_bar(data.iloc[start:end], perceptual_threshold, number_of_variables_per_row, ax, vert, xlabels_rotate, legend, filename, overwrite, ax_kw=axkwargs, legend_kw=legend_kw, **kwargs)
+                scalar_bar(data.iloc[start:end], perceptual_threshold=perceptual_threshold, number_of_variables_per_row=number_of_variables_per_row, ax_input=ax, vert=vert, xlabels_rotate=xlabels_rotate, datalabels=datalabels, legend=legend, filename=filename, overwrite=overwrite, ax_kw=axkwargs, legend_kw=legend_kw, **kwargs)
             elif plottype == 'box':
-                boxplot(data.iloc[start:end], number_of_variables_per_row, ax, vert, xlabels_rotate, filename, overwrite, ax_kw=axkwargs, **kwargs)
+                boxplot(data.iloc[start:end], number_of_variables_per_row=number_of_variables_per_row, ax_input=ax, vert=vert, xlabels_rotate=xlabels_rotate, filename=filename, overwrite=overwrite, ax_kw=axkwargs, **kwargs)
             elif plottype == 'dot-or-whisker':
-                dot_whisker(data.iloc[start:end], number_of_variables_per_row, ax, vert, xlabels_rotate, filename, overwrite, ax_kw=axkwargs, **kwargs)
+                dot_whisker(data.iloc[start:end], number_of_variables_per_row=number_of_variables_per_row, ax_input=ax, vert=vert, xlabels_rotate=xlabels_rotate, filename=filename, overwrite=overwrite, ax_kw=axkwargs, **kwargs)
             elif plottype == 'lollipop':
-                lollipop(plotdata[start:end], number_of_variables_per_row, ax, vert, xlabels_rotate, datalabels, filename, overwrite, ax_kw=axkwargs, **kwargs)
+                lollipop(plotdata[start:end], number_of_variables_per_row=number_of_variables_per_row, ax_input=ax, vert=vert, xlabels_rotate=xlabels_rotate, datalabels=datalabels, continuous_value_axis=continuous_value_axis, filename=filename, overwrite=overwrite, ax_kw=axkwargs, **kwargs)
             elif plottype == 'violin':
-                violinplot(data[data.columns[start:end]], number_of_variables_per_row, ax, vert, xlabels_rotate, filename, overwrite, ax_kw=axkwargs, **kwargs)
+                violinplot(data[data.columns[start:end]], number_of_variables_per_row=number_of_variables_per_row, ax_input=ax, vert=vert, xlabels_rotate=xlabels_rotate, filename=filename, overwrite=overwrite, ax_kw=axkwargs, **kwargs)
 
         #
         # Plot keyword arguments
@@ -552,7 +560,7 @@ def multiplot(plottype, data, perceptual_threshold=0.05, number_of_variables_per
 # =============================================================================
 # Functions for summary plots
 # =============================================================================
-def scalar_bar(data, perceptual_threshold=0.05, number_of_variables_per_row=None, ax_input=None, vert=True, xlabels_rotate=0.0, legend=True, filename=None, overwrite=False, fig_kw={}, ax_kw={}, legend_kw={}, **kwargs):
+def scalar_bar(data, perceptual_threshold=0.05, number_of_variables_per_row=None, ax_input=None, vert=True, xlabels_rotate=0.0, datalabels=False, legend=True, filename=None, overwrite=False, fig_kw={}, ax_kw={}, legend_kw={}, **kwargs):
     """
     Create a bar chart showing a data quality attribute (e.g., number of missing values in each variable).
     The length of each bar can be adjusted to ensure that important perceptual differences are visible.
@@ -571,6 +579,8 @@ def scalar_bar(data, perceptual_threshold=0.05, number_of_variables_per_row=None
         True (vertical bars; the default) or False (horizontal)
     xlabels_rotate : float
         Angle to rotate X axis labels by (only used if vert = True)
+    datalabels : boolean
+        Label each data point. The default is False.
     legend: boolean
         True (add a legend, if a stacked bar chart is plotted) or False (no legend)
     filename : string
@@ -627,24 +637,44 @@ def scalar_bar(data, perceptual_threshold=0.05, number_of_variables_per_row=None
         stack = None
     else:
         name = plotdata.columns[0]
-        #row_values = plotdata[name].to_numpy()
+        row_values = plotdata[name].to_numpy()
         stack = {}
         
         for col in plotdata.columns[1:]:
             stack[col] = plotdata[col].to_numpy()
-        
 
+    # By default, draw axis labels  at the end of the bars
+    threshold = None
+    
+    try:
+        if isinstance(axis_limits, tuple):
+            # Threshold defines whether an axis label will be drawn at the end of a bar or within it
+            threshold = (axis_limits[1] - max(0, axis_limits[0])) * 0.2
+    except:
+        pass
+    
     try:
         # If necessary, extend the arrays to accommodate any dummy variables at the end of the plot
         num_bars_in_row = max(len(plotdata), number_of_variables_per_row)
-        row_values = np.append(row_values, [0] * (num_bars_in_row - len(plotdata)))
-        xlabels = xlabels + [''] * (num_bars_in_row - len(plotdata))
+        num_append = num_bars_in_row - len(plotdata)
+        row_values = np.append(row_values, [0] * num_append)
+        xlabels = xlabels + [''] * num_append
+        
+        if isinstance(stack, dict):
+            for key, value in stack.items():
+                stack[key] = np.append(value, [0] * num_append)
+                
+        #print('stack', stack)
     except:
         # Just plot the variables
         pass
         num_bars_in_row = len(plotdata)
+
+    # Offset for some data value labels
+    label_padding = 10
+
     #
-    # bar() call is similar for vertical and horizontal bar chart
+    # bar() and barh() calls are similar for vertical and horizontal bar chart
     #
     if stack is None:
         if vert:
@@ -652,12 +682,17 @@ def scalar_bar(data, perceptual_threshold=0.05, number_of_variables_per_row=None
         else:
             p = ax.barh(np.arange(num_bars_in_row), row_values, **kw)
 
-        # Draw bar labels for non-zero values in this stack
-        bar_labels = ['' if row_values[i] == 0 else str(data.values[i]) for i in range(len(data))]
-        ax.bar_label(p, labels=bar_labels, label_type='center')                    
+        if datalabels:
+            # Draw axis labels  at the end of the bars
+            bar_labels = [str(data.values[i]) for i in range(len(data))]
+                        
+            if num_bars_in_row > len(bar_labels):
+                bar_labels += [''] * (num_bars_in_row - len(bar_labels))
+                
+            ax.bar_label(p, labels=bar_labels, padding=label_padding)
     else:
         # Stacked bar chart
-        bottom = np.zeros(len(plotdata))
+        bottom = np.zeros(num_bars_in_row)
         l1 = 0
         
         for key, value in stack.items():
@@ -668,9 +703,31 @@ def scalar_bar(data, perceptual_threshold=0.05, number_of_variables_per_row=None
                 else:
                     p = ax.barh(np.arange(num_bars_in_row), value, left=bottom, label=key, ec=edgecolour, color=stack_colours[l1], **kw)
 
-                # Draw bar labels for non-zero values in this stack
-                bar_labels = ['' if value[i] == 0 else str(data.values[i]) for i in range(len(data))]
-                ax.bar_label(p, labels=bar_labels, label_type='center')                    
+                if datalabels:
+                    # Draw bar labels for non-zero values in this stack
+                    if threshold is None:
+                        # Draw axis labels  at the end of the bars
+                        bar_labels = ['' if row_values[i] == 0 else str(data.values[i]) for i in range(len(data))]
+                        
+                        if num_bars_in_row > len(bar_labels):
+                            bar_labels += [''] * (num_bars_in_row - len(bar_labels))
+                            
+                        ax.bar_label(p, labels=bar_labels, padding=label_padding)
+                    else:
+                        # Threshold defines whether an axis label will be drawn at the end of a bar or within it
+                        # NB: There should be only one item in the stack for each stacked bar
+                        bar_labels = ['' if value[i] < threshold else str(data.values[i]) for i in range(len(data))]
+                        
+                        if num_bars_in_row > len(bar_labels):
+                            bar_labels += [''] * (num_bars_in_row - len(bar_labels))
+                            
+                        ax.bar_label(p, labels=bar_labels, label_type='center')                    
+                        bar_labels = ['' if value[i] >= threshold or value[i] == 0 else str(data.values[i]) for i in range(len(data))]
+                        
+                        if num_bars_in_row > len(bar_labels):
+                            bar_labels += [''] * (num_bars_in_row - len(bar_labels))
+                            
+                        ax.bar_label(p, labels=bar_labels, padding=label_padding)
                 
                 bottom += value
             
@@ -1131,7 +1188,7 @@ def dot_whisker(data, number_of_variables_per_row=None, ax_input=None, vert=True
     ax_kw : dictionary
         Keyword arguments for a Matplotlib Axes object
     kwargs : dictionary
-        Keyword arguments for a Matplotlib Axes.bar object
+        Keyword arguments for a Matplotlib Axes.scatter or Axes.errorbar object
 
     Returns
     -------
@@ -1257,34 +1314,36 @@ def dot_whisker(data, number_of_variables_per_row=None, ax_input=None, vert=True
         _draw_fig(filename, overwrite)
 
 
-def lollipop(data, number_of_variables_per_row=None, ax_input=None, vert=True, xlabels_rotate=0.0, datalabels=False, filename=None, overwrite=False, fig_kw={}, ax_kw={}, **kwargs):
+def lollipop(data, number_of_variables_per_row=None, ax_input=None, vert=True, xlabels_rotate=0.0, datalabels=False, continuous_value_axis=True, filename=None, overwrite=False, fig_kw={}, ax_kw={}, **kwargs):
     """
     Create a lollipop plot (e.g., to show value counts for a variable)
 
     Parameters
     ----------
     data : series
-        Series containing the variable names (index) and data quality attribute to be plotted (e.g., number of missing values in each variable)
+        Value counts for a variable names.
     number_of_variables_per_row : int
-        None (plot all variables in one bar chart) or the number of variables to show in each row
+        None (plot all variables in one bar chart) or the number of variables to show in each row. The default is None.
     ax_input: axis or None
-        Matplotlib axis
+        Matplotlib axis. The default is None.
     vert: boolean
-        True (vertical bars; the default) or False (horizontal)
+        True (vertical bars) or False (horizontal). The default is True.
     xlabels_rotate : float
-        Angle to rotate X axis labels by (only used if vert = True)
+        Angle to rotate X axis labels by (only used if vert=True). The default is 0.0.
     datalabels : boolean
-        Label each data point (False (default) or True)
+        Label each data point. The default is False.
+    continuous_value_axis : boolean
+        Plot numerical/datetime values on a continuous axis to show any gaps in values. The default is True.
     filename : string
-        None or a filename for the figure
+        Filename for the figure. The default is None.
     overwrite : boolean
-        False (do not overwrite file; the default) or True (overwrite file if it exists)
+        False (do not overwrite file) or True (overwrite file if it exists). The default is False.
     fig_kw : dictionary
-        Keyword arguments for a Matplotlib Figure object
+        Keyword arguments for a Matplotlib Figure object. The default is {}.
     ax_kw : dictionary
-        Keyword arguments for a Matplotlib Axes object
+        Keyword arguments for a Matplotlib Axes object. The default is {}.
     kwargs : dictionary
-        Keyword arguments for a Matplotlib Axes.bar object
+        Keyword arguments for a Matplotlib Axes.scatter and Axes.plot objects
 
     Returns
     -------
@@ -1305,19 +1364,12 @@ def lollipop(data, number_of_variables_per_row=None, ax_input=None, vert=True, x
         fig.set(**fig_kw)
     else:
         ax = ax_input
-        
-    # Determine whether the index is just numerical values    
-    #numerical_values = False
-    
-    #try:
-    #    data.index.min()
-    #    numerical_values = True
-    #except:
-    #    pass
 
-    #numerical_values = False if False in data.str.isnumeric().tolist() else True
-    #numerical_values = True if pd.to_numeric(data, errors='coerce').notnull().all() else False
-    numerical_values = True if all(type(e) in (int, float) for e in data.index) else False
+    if continuous_value_axis:
+        # Determine whether the index is just numerical values    
+        numerical_values = True if all(type(e) in (int, float) for e in data.index) else False
+    else:
+        numerical_values = False
         
     if numerical_values:
         plotdata = data
@@ -1371,6 +1423,14 @@ def lollipop(data, number_of_variables_per_row=None, ax_input=None, vert=True, x
     
             ax.set(**axkwargs)
             
+            if datalabels:
+                # This is a hack, but it works for default-sized markers
+                limits = ax.get_ylim()
+                offset = (limits[1] - limits[0]) / 50.0
+
+                for l1 in range(len(dotx)):
+                    ax.text(dotx[l1], doty[l1] + offset, str(doty[l1]), horizontalalignment='center', verticalalignment='bottom')
+            
             if numerical_values:
                 ax.set_xlim(plotdata.index.min()-0.5, plotdata.index.max()+0.5)
                 ax.xaxis.set_major_locator(mpl.ticker.MaxNLocator(integer=True))
@@ -1401,7 +1461,7 @@ def lollipop(data, number_of_variables_per_row=None, ax_input=None, vert=True, x
             ax.set(**axkwargs)
             
             if datalabels:
-                # This is a hack, btu it works for default-sized markers
+                # This is a hack, but it works for default-sized markers
                 limits = ax.get_xlim()
                 offset = (limits[1] - limits[0]) / 50.0
 
@@ -1429,7 +1489,7 @@ def lollipop(data, number_of_variables_per_row=None, ax_input=None, vert=True, x
             #    ax.tick_params('x', labelrotation=xlabels_rotate)
 
     else:
-        print('** WARNING ** vizdataquality, plot.py, dot_whisker(): No variables to be plotted.')
+        print('** WARNING ** vizdataquality, plot.py, lollipop(): No variables to be plotted.')
             
     if ax_input is None:
         _draw_fig(filename, overwrite)
@@ -1442,7 +1502,7 @@ def datetime_counts(data, component='raw data', gap_threshold=None, show_gaps=Tr
     Parameters
     ----------
     data : series
-        Series containing the variable names (index) and data quality attribute to be plotted (e.g., number of missing values in each variable)
+        Values of a variable.
     component : string
         Component to plot ('year', 'month', 'dayofweek', 'hour', 'minute' or 'second'; case independent) or 'raw data' (default)
     gap_threshold: None, int or datetime

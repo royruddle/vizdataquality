@@ -41,7 +41,7 @@ def get_dataset(option):
     Number of rows in the dataset and a dataframe containing it.
 
     """
-    df = None
+    df = pd.DataFrame()
     
     if option == 'simple':
         data = {}

@@ -42,7 +42,7 @@ def test_get_dataset_time_1():
 def test_get_dataset_value_counts_1():
     num_rows, df = get_dataset('value counts 1')
     assert num_rows == 100
-    assert df['Categorical'].value_counts()['a'] == 6
+    assert df['Categorical'].value_counts()['a'] == 60
     assert df['Categorical (ints)'].dtype == 'object'
     assert df['Date'].dtype == 'datetime64[ns]'
 

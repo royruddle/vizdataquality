@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 import pytest
 import pandas as pd
-import datetime
-import report as vdqr
+from vizdataquality import report as vdqr
 
 def test_report():
     report = vdqr.Report()

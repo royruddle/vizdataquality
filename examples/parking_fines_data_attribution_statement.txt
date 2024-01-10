@@ -1,0 +1,1 @@
+The off-street parking fines data ('Quarter 4 201819.csv') is (c) Leeds City Council, [insert year of publication], https://datamillnorth.org/dataset/v8ggw/off-street-parking-fines. This information is licensed under the terms of the Open Government Licence (https://www.nationalarchives.gov.uk/doc/open-government-licence/version/2/)."

@@ -28,17 +28,17 @@ import math
 # Functions
 # =============================================================================
 def get_dataset(option):
-    """
-    Get a dataset as a data frame.
+    """Get a dataset as a data frame.
 
     Parameters
     ----------
-    option : int
-        1
+    option : str
+        'simple', 'missing 1', 'numeric 1', 'date 1', 'time 1', 'datetime' or 'value counts 1'
 
     Returns
     -------
-    Number of rows in the dataset and a dataframe containing it.
+    int, dataframe
+        Number of rows in the dataset and a dataframe containing it.
 
     """
     df = pd.DataFrame()

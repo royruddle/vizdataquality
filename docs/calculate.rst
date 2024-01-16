@@ -1,0 +1,2 @@
+.. automodule:: vizdataquality.calculate
+   :members:

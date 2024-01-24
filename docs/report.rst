@@ -1,0 +1,2 @@
+.. automodule:: vizdataquality.report
+   :members:

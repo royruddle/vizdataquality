@@ -102,7 +102,8 @@ def apply_perceptual_discontinuity_individually(input_data, perceptual_threshold
 
     Returns
     -------
-    A series (the adjusted values) or dataframe (the adjusted values and, if a series was input then an extra column for each group of values for plotting as a stacked bar chart).
+    Series or DataFrame
+        A series (the adjusted values) or dataframe (the adjusted values and, if a series was input then an extra column for each group of values for plotting as a stacked bar chart).
 
     """
     #data = input_data.copy()
@@ -217,7 +218,8 @@ def apply_perceptual_discontinuity_to_group(input_data, perceptual_threshold):
 
     Returns
     -------
-    A series or dataframe, with perceptual discontinuity applied to groups of values (e.g. in a stacked bar chart)
+    Series or DataFrame
+        A series or dataframe, with perceptual discontinuity applied to groups of values (e.g. in a stacked bar chart)
 
     """
     data = input_data.copy()

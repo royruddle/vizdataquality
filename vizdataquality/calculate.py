@@ -43,7 +43,7 @@ def get_non_numeric_values(df):
 
     Returns
     -------
-    nnv_list : list
+    list
         The unique, non-numeric values.
 
     """
@@ -74,7 +74,7 @@ def get_value_lengths_examples(df):
 
     Returns
     -------
-    df_examples : DataFrame
+    DataFrame
         A dataframe containing the examples. The first column ('Examples') specifies what each row contains (e.g., Shortest value).
 
     """
@@ -110,7 +110,7 @@ def calc(df, options=None):
 
     Returns
     -------
-    df_output : DataFrame
+    DataFrame
         The descriptive statistics (seperate row for each variable; variable names are the index; columns are different descriptive statistics).
 
     """

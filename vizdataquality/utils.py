@@ -27,10 +27,24 @@ import logging
 
 ##############################################################################
 def init_logging(logfile_name, overwrite_output_file=False):
-    """
-    :param logfile_name: The full pathname of the logfile
-    :param overwrite_output_file: True (start a new logfile) or False (append to the file if it exists, and start a new file if it does not exist)
-    :return logger, list of file handlers
+    """Initialise a logfile.
+    
+    Logfiles can be useful when you are processing large datafiles or debugging.
+
+    Parameters
+    ----------
+    logfile_name : str
+        The full pathname of the logfile.
+    overwrite_output_file : boolean, optional
+        True (start a new logfile) or False (append to the file if it exists, and start a new file if it does not exist). The default is False.
+
+    Returns
+    -------
+    log : Logger
+        A Logger object.
+    handlers : list
+        The logfile's handlers.
+
     """
     error = False
     function_name = 'init_logging()'
@@ -79,9 +93,19 @@ def init_logging(logfile_name, overwrite_output_file=False):
 
 ##############################################################################
 def end_logging(log, handlers):
-    """
-    :param log: The logger
-    :param handlers: The logfile handlers
+    """End logging.
+
+    Parameters
+    ----------
+    log : Logger
+        The logger.
+    handlers : TYPE
+        The logfile handlers.
+
+    Returns
+    -------
+    None.
+
     """
     # Remove handlers so logging messages is not output multiple times
     
@@ -91,13 +115,22 @@ def end_logging(log, handlers):
 
 ##############################################################################
 def detect_file_encoding(input_filename, read_in_chunks=True, confidence_level=0.9):
-    """
-    Detect and return the encoding of a text file
-    
-    :param input_file: absolute path of file
-    :param read_in_chunks: True (read the whole file; more accurate) or False (read the file until the confidence level is satisfied). Default is False.
-    :param confidence_level: Confidence threshold (only used if read_in_chunks = True)
-    :return A dictionary containing the 'encoding' and a 'confidence' level, or None (file could not be found/opened)
+    """Detect and return the encoding of a text file
+
+    Parameters
+    ----------
+    input_filename : str
+        The absolute path of the file.
+    read_in_chunks : boolean, optional
+        True (read the whole file; more accurate) or False (read the file until the confidence level is satisfied). Default is False. The default is True.
+    confidence_level : float, optional
+        Confidence threshold (only used if read_in_chunks = True). The default is 0.9.
+
+    Returns
+    -------
+    result : dict
+        A dictionary containing the 'encoding' and a 'confidence' level, or None (file could not be found/opened).
+
     """
     result = None
     function_name = "detect_file_encoding()"

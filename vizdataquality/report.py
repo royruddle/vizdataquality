@@ -25,6 +25,11 @@ import pandas as pd
 # Report class
 # =============================================================================
 class Report:
+    """This class allows users to write a report while they investigate data quality and profiling a dataset.
+    Reports may have headings, text, figures and tables.
+    The overall structure may follow the six steps we suggest or be freeform.
+    Reports may be output as a webpage, in Latex or in a text file.
+    """
     def __init__(self):
         self.report = {}
         self.num_items = 0
@@ -40,7 +45,8 @@ class Report:
     
         Returns
         -------
-        The report items in a dictionary.
+        dict
+            The report items in a dictionary.
         """
         return self.report
         
@@ -58,7 +64,8 @@ class Report:
     
         Returns
         -------
-        The key used for the acknowledgements in the report dictionary.
+        int
+            The key used for the acknowledgements in the report dictionary.
         """
         txt = ('' if text is None else text + ' ') + 'This report was created using the vizdataquality Python package.'
         return self.add_heading('Acknowledgements', text=txt, key=key)
@@ -77,7 +84,8 @@ class Report:
     
         Returns
         -------
-        The key used for the step in the report dictionary.
+        int
+            The key used for the step in the report dictionary.
         """
         return self.add_heading('Step 1: Look at your data (is anything obviously wrong?)', text=text, key=key)
     
@@ -95,7 +103,8 @@ class Report:
     
         Returns
         -------
-        The key used for the step in the report dictionary.
+        int
+            The key used for the step in the report dictionary.
         """
         return self.add_heading('Step 2: Watch out for special values', text=text, key=key)
     
@@ -113,7 +122,8 @@ class Report:
     
         Returns
         -------
-        The key used for the step in the report dictionary.
+        int
+            The key used for the step in the report dictionary.
         """
         return self.add_heading('Step 3: Is any data missing?', text=text, key=key)
     
@@ -131,7 +141,8 @@ class Report:
     
         Returns
         -------
-        The key used for the step in the report dictionary.
+        int
+            The key used for the step in the report dictionary.
         """
         return self.add_heading('Step 4: Check each variable', text=text, key=key)
     
@@ -149,7 +160,8 @@ class Report:
     
         Returns
         -------
-        The key used for the step in the report dictionary.
+        int
+            The key used for the step in the report dictionary.
         """
         return self.add_heading('Step 5: Check combinations of variables', text=text, key=key)
     
@@ -167,7 +179,8 @@ class Report:
     
         Returns
         -------
-        The key used for the step in the report dictionary.
+        int
+            The key used for the step in the report dictionary.
         """
         return self.add_heading('Step 6: Profile the cleaned data', text=text, key=key)
     
@@ -185,7 +198,8 @@ class Report:
     
         Returns
         -------
-        The key used for the title in the report dictionary.
+        int
+            The key used for the title in the report dictionary.
         """
         self.num_items += 1
         k = self.num_items if key is None else key
@@ -211,7 +225,8 @@ class Report:
     
         Returns
         -------
-        The key used for the heading in the report dictionary.
+        int
+            The key used for the heading in the report dictionary.
         """
         self.num_items += 1
         k = self.num_items if key is None else key
@@ -241,7 +256,8 @@ class Report:
     
         Returns
         -------
-        The key used for the table in the report dictionary.
+        int
+            The key used for the table in the report dictionary.
         """
         data = {'Dataset': [name], 'Number of rows': [num_rows], 'Number of columns': [num_cols]}
         df = pd.DataFrame.from_dict(data)
@@ -266,7 +282,8 @@ class Report:
     
         Returns
         -------
-        The key used for the table in the report dictionary.
+        int
+            The key used for the table in the report dictionary.
         """
         # Move the index (variable names) into a column
         df2 = df.reset_index()
@@ -296,7 +313,8 @@ class Report:
     
         Returns
         -------
-        The key used for the table in the report dictionary.
+        int
+            The key used for the table in the report dictionary.
         """
         if df is not None and df.shape[0] * df.shape[1] > 0:
             self.num_items += 1
@@ -330,7 +348,8 @@ class Report:
     
         Returns
         -------
-        The key used for the figure in the report dictionary.
+        int
+            The key used for the figure in the report dictionary.
         """
         self.num_items += 1
         k = self.num_items if key is None else key
@@ -352,7 +371,8 @@ class Report:
     
         Returns
         -------
-        The key used for the paragraph in the report dictionary.
+        int
+            The key used for the paragraph in the report dictionary.
         """
         self.num_items += 1
         k = self.num_items if key is None else key

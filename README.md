@@ -18,7 +18,7 @@ The package includes notebooks that show you how to:
 - [Calculate a set of data quality attributes and output them to a file](https://github.com/royruddle/vizdataquality/blob/main/notebooks/Simple%20example.ipynb)
 - Use each type of plot, e.g., [datetime value distribution](https://github.com/royruddle/vizdataquality/blob/main/notebooks/Datetime%20value%20distribution.ipynb)
 - [Create a report](https://github.com/royruddle/vizdataquality/blob/main/notebooks/Report.ipynb) while you investigate data quality and profile a dataset
-[- Apply the six-step workflow to an open parking fines dataset](https://github.com/royruddle/vizdataquality/blob/main/notebooks/Workflow%20(parking%20fines).ipynb)
+- [Apply the six-step workflow to an open parking fines dataset](https://github.com/royruddle/vizdataquality/blob/main/notebooks/Workflow%20(parking%20fines).ipynb)
 
 After installing vizdataquality, to follow theses tutorials interactively you will need to clone or download this repository. Then start jupyter from within it:
 

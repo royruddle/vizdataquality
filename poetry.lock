@@ -2910,11 +2910,10 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [extras]
 all = ["Sphinx", "matplotlib", "notebook", "pydata-sphinx-theme", "pytest"]
 doc = ["Sphinx", "pydata-sphinx-theme"]
-extra = ["Sphinx", "matplotlib", "notebook", "pydata-sphinx-theme", "pytest"]
 notebooks = ["matplotlib", "notebook"]
 test = ["pytest"]
 
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.12"
-content-hash = "a46c1f06dc5fe9a62b7028383c10aeff3b97688b7a4812c9d0e21d0b3f241729"
+content-hash = "c8e632edebe725c82590437081ff20be5adf52e01fb41ef543bad6af1e36adf7"

@@ -26,13 +26,13 @@ python = ">=3.9,<3.12"
 numpy = "^1.24"
 pandas = "^1.5"
 tomli = "^2.0"
-chardet = "^5.1.0"
 matplotlib = "^3.7.2"
 
 notebook = { version = "^6.4", optional = true }
 Sphinx = { version = "^4.3", optional = true }
 pydata-sphinx-theme = { version = "^0.7", optional = true }
 pytest = { version = "^6.2", optional = true }
+chardet = "^5.2.0"
 
 [tool.poetry.extras]
 notebooks = ["notebook", "matplotlib"]

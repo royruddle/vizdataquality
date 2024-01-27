@@ -8,10 +8,16 @@ This is a Python package for visualizing data quality, and includes this six-ste
 6. Profile the cleaned data
 
 ## Documentation
-TBD
+[The vizdataquality documentation](https://vizdataquality.readthedocs.io/en/latest/index.html) is hosted on Read the Docs.
 
 ## Installation
-TBD
+We recommend installing setvis in a python virtual environment or Conda environment.
+
+To install setvis, most users should run:
+
+```
+pip install 'vizdataquality'
+```
 
 ## Tutorials
 The package includes notebooks that show you how to:

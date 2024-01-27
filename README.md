@@ -11,9 +11,9 @@ This is a Python package for visualizing data quality, and includes this six-ste
 [The vizdataquality documentation](https://vizdataquality.readthedocs.io/en/latest/index.html) is hosted on Read the Docs.
 
 ## Installation
-We recommend installing setvis in a python virtual environment or Conda environment.
+We recommend installing vizdataquality in a python virtual environment or Conda environment.
 
-To install setvis, most users should run:
+To install vizdataquality, most users should run:
 
 ```
 pip install 'vizdataquality'

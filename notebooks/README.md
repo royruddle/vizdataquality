@@ -21,4 +21,4 @@ Others create visualizations directly from a dataframe containing the dataset.
 - [Create a report](https://github.com/royruddle/vizdataquality/blob/main/notebooks/Report.ipynb) while you investigate data quality and profile a dataset
 
 ## Workflow
-- Apply a [six-step workflow](https://github.com/royruddle/vizdataquality/blob/main/notebooks/Workflow%20(parking%20fines).ipynb) to investigate data quality and profile an open parking fines dataset.
+- Apply a [six-step workflow](https://github.com/royruddle/vizdataquality/blob/main/notebooks/Workflow%20(parking%20fines).ipynb) to investigate data quality and profile an open parking fines dataset

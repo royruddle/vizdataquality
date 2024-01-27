@@ -1,3 +1,4 @@
+[![Python Package](https://github.com/royruddle/vizdataquality/actions/workflows/main.yml/badge.svg)](https://github.com/royruddle/vizdataquality/actions/workflows/main.yml)
 # vizdataquality
 This is a Python package for visualizing data quality, and includes this six-step workflow:
 1. Look at your data (is anything obviously wrong?)

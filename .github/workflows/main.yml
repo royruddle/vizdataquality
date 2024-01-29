@@ -44,4 +44,5 @@ jobs:
     - name: Build docs [Linux]
       if: runner.os == 'Linux'
       run: |
+        pip install myst-parser
         poetry run sphinx-build docs docs/build -b html

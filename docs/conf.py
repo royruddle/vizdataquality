@@ -31,7 +31,7 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.mathjax",
     "sphinx.ext.napoleon",
-    "myst-parser",
+    "myst_parser",
 ]
 
 # Add any paths that contain templates here, relative to this directory.

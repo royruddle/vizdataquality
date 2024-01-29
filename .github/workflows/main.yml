@@ -43,3 +43,9 @@ jobs:
       run: |
         pip install -e '.[all]'
         cd tests && bash check_notebooks.sh
+
+    - name: Build Docs [Linux]
+      if: runner.os == 'Linux'
+      run: |
+        cd docs
+        make html

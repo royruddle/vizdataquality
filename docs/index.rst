@@ -3,14 +3,16 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to vizdataquality's documentation!
+Welcome to vizdataquality's documentation
 ==========================================
 
 .. toctree::
-   :maxdepth: 2
-   :caption: Contents:
+   :maxdepth: 1
 
+   api_reference
 
+.. include:: ../README.md
+   :parser: myst_parser.sphinx_
 
 Indices and tables
 ==================

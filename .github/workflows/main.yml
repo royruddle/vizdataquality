@@ -27,12 +27,10 @@ jobs:
         python-version: ${{ matrix.python-version }}
 
     - name: Install
-      if: steps.cache-deps.outputs.cache-hit != 'true'
       run: |
         python -m pip install --upgrade pip
         pip install poetry
-        poetry update
-        poetry install -E all
+        poetry install -E all -E doc
 
     - name: Tests
       run: |

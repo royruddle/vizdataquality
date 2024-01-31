@@ -4,7 +4,6 @@ on:
   push:
     paths-ignore:
       - '**/README.md'
-#     branches: [ main, gh-actions ]
   pull_request:
     branches: [ main ]
 
@@ -26,20 +25,24 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
-    - name: Install
-      if: steps.cache-deps.outputs.cache-hit != 'true'
+    - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install poetry
-        poetry update
-        poetry install -E all
+        poetry install -E all -E doc
 
-    - name: Tests
+    - name: Run tests
       run: |
         poetry run pytest
 
-    - name: Notebooks [Linux]
-      if: runner.os == 'Linux' && matrix.python-version == '3.8'
+    - name: Run notebooks [Linux]
+      if: runner.os == 'Linux' && matrix.python-version == '3.9'
       run: |
         pip install -e '.[all]'
         cd tests && bash check_notebooks.sh
+
+    - name: Build docs [Linux]
+      if: runner.os == 'Linux'
+      run: |
+        pip install myst-parser
+        poetry run sphinx-build docs docs/build -b html

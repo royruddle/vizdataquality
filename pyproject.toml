@@ -4,7 +4,7 @@ line-length = 79
 [tool.poetry]
 name = "vizdataquality"
 packages = [{ include = "vizdataquality" }]
-version = "0.1rc3"
+version = "0.1.0"
 description = "Visualize data quality"
 authors = [
     "Roy Ruddle <R.A.Ruddle@leeds.ac.uk>",

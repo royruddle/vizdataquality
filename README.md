@@ -14,7 +14,7 @@ This is a Python package for visualizing data quality, and includes this six-ste
 ## Installation
 We recommend installing vizdataquality in a python virtual environment or Conda environment.
 
-To install vizdataquality, most users should run:
+To install [vizdataquality](https://pypi.org/project/vizdataquality/), most users should run:
 
 ```
 pip install 'vizdataquality'

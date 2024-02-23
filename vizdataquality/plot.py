@@ -28,7 +28,7 @@ import matplotlib.pyplot as plt
 def _draw_fig(filename, overwrite, **kwargs):
     """
     Internal function, which is called to draw a plot to the screen or save it in a file.
-    
+
     Parameters
     ----------
     filename : string
@@ -50,7 +50,7 @@ def _draw_fig(filename, overwrite, **kwargs):
         elif overwrite == False:
             print('** WARNING ** vizdataquality, plot.py, _draw_fig(): Figure not output because a file with the supplied name already exists.')
             print(filename)
-        
+
     plt.show()
 
 
@@ -71,17 +71,17 @@ def _get_parameter(value, num):
 
     """
     param = value
-    
+
     if isinstance(value, list):
         try:
             # Get the 'num'th item in the list
             param = value[num]
         except:
             pass
-    
+
     return param
 
-    
+
 # =============================================================================
 # Utility functions
 # =============================================================================
@@ -111,29 +111,29 @@ def apply_perceptual_discontinuity_individually(input_data, perceptual_threshold
     legend_labels = ['Perceptual discontinuity', 'Original number']
     # Finer-grained distinction
     #legend_labels = []
-    
+
     if axis_limits is None or not isinstance(axis_limits, tuple):
         # The value of perceptual_threshold is used
         val1 = perceptual_threshold
-        
+
         if type(input_data) is pd.Series:
             #data = input_data.apply(lambda x: x if x <= 0 else max(x, perceptual_threshold)).to_frame()
             #.reset_index().rename(columns={data.name: 'Value', 'count': 'Count'})
             stack = []
             for l1 in range(2):
                 stack.append([0] * len(input_data))
-                
+
             l1 = 0
             for index, value in input_data.items():
                 if value > 0.0 and value < val1:
                     stack[0][l1] = val1
                 elif value >= val1:
                     stack[1][l1] = value
-                    
+
                 l1 += 1
-                
+
             data = input_data.to_frame()
-            
+
             if len(legend_labels) == 2:
                 data[legend_labels[0]] = stack[0]
                 data[legend_labels[1]] = stack[1]
@@ -142,13 +142,13 @@ def apply_perceptual_discontinuity_individually(input_data, perceptual_threshold
                 data[str(val1) + ' <= value'] = stack[1]
         else:
             data = input_data.apply(lambda x: x if x <= 0 else max(x, val1))
-            
+
     else:
         # The threshold is perceptual_threshold * axis_limits[1]
         max_value = axis_limits[1]
         val1 = perceptual_threshold*max_value
         val2 = (1.0-perceptual_threshold)*max_value
-        
+
         if val1.is_integer() and val2.is_integer():
             val1 = int(val1)
             val2 = int(val2)
@@ -157,7 +157,7 @@ def apply_perceptual_discontinuity_individually(input_data, perceptual_threshold
             stack = []
             for l1 in range(2 if len(legend_labels) == 2 else 4):
                 stack.append([0] * len(input_data))
-                    
+
             if len(legend_labels) == 2:
                 l1 = 0
                 for index, value in input_data.items():
@@ -173,9 +173,9 @@ def apply_perceptual_discontinuity_individually(input_data, perceptual_threshold
                     elif value >= max_value:
                         # Value is unchanged
                         stack[1][l1] = value
-                        
+
                     l1 += 1
-                    
+
                 data = input_data.to_frame()
                 data[legend_labels[0]] = stack[0]
                 data[legend_labels[1]] = stack[1]
@@ -190,9 +190,9 @@ def apply_perceptual_discontinuity_individually(input_data, perceptual_threshold
                         stack[2][l1] = val2
                     elif value >= max_value:
                         stack[3][l1] = value
-                        
+
                     l1 += 1
-                    
+
                 data = input_data.to_frame()
                 data['0 < value < ' + str(val1)] = stack[0]
                 data[str(val1) + ' <= value <= ' + str(val2)] = stack[1]
@@ -200,10 +200,10 @@ def apply_perceptual_discontinuity_individually(input_data, perceptual_threshold
                 data['value = ' + str(max_value)] = stack[3]
         else:
             data = input_data.apply(lambda x: x if x <= 0 or x >= max_value else (max(x, perceptual_threshold*max_value) if x < max_value/2.0 else min(x, (1.0-perceptual_threshold)*max_value)))
-    
+
     return data
 
-    
+
 def apply_perceptual_discontinuity_to_group(input_data, perceptual_threshold):
     """
     Apply perceptual discontinuity threshold to a group of values. The values are adjusted so each is >= perceptual_threshold * sum, but the sum is unchanged.
@@ -223,13 +223,13 @@ def apply_perceptual_discontinuity_to_group(input_data, perceptual_threshold):
 
     """
     data = input_data.copy()
-    
+
     if isinstance(data, pd.Series):
         total = data.sum()
         p = perceptual_threshold * total
         # First, make sure every value is >= threshold
         data = data.apply(lambda x: 0.0 if x <= 0.0 else max(x, p))
-        
+
         if data.sum() > total:
             # The sum of the values is > max_value, so calculate the excess
             e = float(data.sum() - total)
@@ -242,7 +242,7 @@ def apply_perceptual_discontinuity_to_group(input_data, perceptual_threshold):
             p = perceptual_threshold * total
             # First, make sure every value is >= threshold
             data[col] = data[col].apply(lambda x: 0.0 if x <= 0.0 else max(x, p))
-            
+
             if data[col].sum() > total:
                 # The sum of the values is > max_value, so calculate the excess
                 e = float(data[col].sum() - total)
@@ -258,7 +258,7 @@ def apply_perceptual_discontinuity_to_group(input_data, perceptual_threshold):
 # =============================================================================
 def plotgrid(tasktype, data, num_rows=None, num_cols=None, vert=True, xlabels_rotate=0.0, perceptual_threshold=0.05, legend=True, components='raw data', gap_threshold=None, show_gaps=True, datalabels=False, continuous_value_axis=True, filename=None, overwrite=False, fig_kw={}, ax_kw={}, legend_kw={}, **kwargs):
     """
-    Create a grid of plots of a given type.    
+    Create a grid of plots of a given type.
 
     Parameters
     ----------
@@ -308,14 +308,14 @@ def plotgrid(tasktype, data, num_rows=None, num_cols=None, vert=True, xlabels_ro
         # Get size of data
         data_nrow = len(data)
         data_ncol = 1 if isinstance(data, pd.Series) else data.shape[1]
-        
+
         if tasktype == 'datetime distribution':
             # A separate plot is created for each component of each column
             if isinstance(components, list):
                 comps = components
             else:
                 comps = [components]
-                
+
             data_ncol = data_ncol * len(comps)
 
         # Calculate the number of rows/columns of plots
@@ -333,9 +333,9 @@ def plotgrid(tasktype, data, num_rows=None, num_cols=None, vert=True, xlabels_ro
             nrows = num_rows
             ncols = num_cols
 
-        # Create the figure and subplots            
+        # Create the figure and subplots
         fig, axs = plt.subplots(nrows, ncols)
-            
+
         # Figure kwargs are applied here
         fig.set(**fig_kw)
 
@@ -351,10 +351,10 @@ def plotgrid(tasktype, data, num_rows=None, num_cols=None, vert=True, xlabels_ro
         dnum = 0
         # Parameter number in list
         pnum = 0
-        
+
         for l1 in range(nrows):
             for l2 in range(ncols):
-                
+
                 if type(axs) is mpl.axes.Axes:
                     ax = axs
                 elif ncols == 1:
@@ -363,33 +363,33 @@ def plotgrid(tasktype, data, num_rows=None, num_cols=None, vert=True, xlabels_ro
                     ax = axs[l2]
                 else:
                     ax = axs[l1][l2]
-                    
+
                 if isinstance(data, pd.Series):
                     plotdata = data if cnum == 0 else None
                 else:
                     plotdata = data[data.columns[cnum]] if cnum < data_ncol else None
-                    
+
                 #plotdata = data if isinstance(data, pd.Series) else data[data.columns[cnum]] if cnum < data_ncol else None
-                
+
                 if plotdata is not None:
                     # If a list of titles is provided then apply the title for this plot
                     kw = 'title'
-                    
+
                     if kw in ax_kw and isinstance(ax_kw[kw], list):
                         # Need to check whether title is a list, so the suptitle() isn't used
                         axkwargs[kw] = _get_parameter(ax_kw[kw], pnum)
-                        
+
                     # Get rotation for this plot, if a list was provided
                     xlabrot = _get_parameter(xlabels_rotate, pnum)
-                    
+
                     # This check is made because the grid may contain more cells than there are dataframe columns
                     if tasktype == 'scalars':
                         scalar_bar(plotdata, ax_input=ax, vert=vert, xlabels_rotate=xlabrot, perceptual_threshold=perceptual_threshold, legend=legend, filename=filename, overwrite=overwrite, ax_kw=axkwargs, legend_kw={}, **kwargs)
-                        
+
                         cnum += 1
                     elif tasktype == 'datetime distribution':
                         datetime_counts(plotdata, ax_input=ax, xlabels_rotate=xlabrot, component=comps[dnum], gap_threshold=gap_threshold, show_gaps=show_gaps, filename=filename, overwrite=overwrite, ax_kw=axkwargs, **kwargs)
-                        
+
                         if dnum < len(comps) - 1:
                             # Next component
                             dnum += 1
@@ -400,7 +400,7 @@ def plotgrid(tasktype, data, num_rows=None, num_cols=None, vert=True, xlabels_ro
                     elif tasktype == 'value counts':
                         lollipop(plotdata.value_counts(), ax_input=ax, vert=vert, xlabels_rotate=xlabrot, datalabels=datalabels, continuous_value_axis=continuous_value_axis, filename=filename, overwrite=overwrite, ax_kw=axkwargs, **kwargs)
                         cnum += 1
-                        
+
                     # Increment the parameter number
                     pnum += 1
                 else:
@@ -409,12 +409,12 @@ def plotgrid(tasktype, data, num_rows=None, num_cols=None, vert=True, xlabels_ro
 
         #
         # Draw or output the figure to a file
-        #        
+        #
         _draw_fig(filename, overwrite)
     else:
         print('** WARNING ** vizdataquality, plot.py, plotgrid(): The tasktype is not valid:', tasktype)
-    
-    
+
+
 def multiplot(plottype, data, perceptual_threshold=0.05, number_of_variables_per_row=None, vert=True, xlabels_rotate=0.0, datalabels=False, continuous_value_axis=True, filename=None, overwrite=False, plt_kw={}, fig_kw={}, ax_kw={}, legend_kw={}, **kwargs):
     """
     Plot a data quality attribute (e.g., number of missing values in each variable).
@@ -477,18 +477,18 @@ def multiplot(plottype, data, perceptual_threshold=0.05, number_of_variables_per
                 num_subplots = int((len(data) + number_of_variables_per_row - 1) / number_of_variables_per_row)
             except:
                 num_subplots = 1
-    
+
         if vert:
             # Multiple rows of plots
             fig, axs = plt.subplots(num_subplots, sharey=True)
         else:
             # Multiple columns of plots
             fig, axs = plt.subplots(1, num_subplots, sharex=True)
-            
+
         # Figure kwargs are applied here and not passed to scalar_bar()
         fig.set(**fig_kw)
         #grid_shape = (num_subplots, num_cols)
-        
+
         if True:
             # This shouldn't be needed because "When subplots have a shared x-axis along a column, only the x tick labels of the bottom subplot are created". Similarly for the Y axis
             # Use a single label for each axis
@@ -498,7 +498,7 @@ def multiplot(plottype, data, perceptual_threshold=0.05, number_of_variables_per
                 default_axis_label = 'Count'
             else:
                 default_axis_label = data.name
-                
+
             label1 = 'Value' if plottype == 'lollipop' else 'Variable'
             fig.supxlabel(axkwargs.get('xlabel', label1 if vert else default_axis_label))
             axkwargs['xlabel'] = None
@@ -529,10 +529,10 @@ def multiplot(plottype, data, perceptual_threshold=0.05, number_of_variables_per
                 # All but the last of multiple rows
                 start = l1 * number_of_variables_per_row
                 end = start + number_of_variables_per_row
-                
+
             #ax = plt.subplot2grid(shape=grid_shape, loc=(l1, 0))
             ax = axs if type(axs) is mpl.axes.Axes else axs[l1]
-            
+
             if plottype == 'bar':
                 # Add the legend to the first subplot
                 legend = True if l1 == 0 else False
@@ -553,7 +553,7 @@ def multiplot(plottype, data, perceptual_threshold=0.05, number_of_variables_per
         plt.ylim(plt_kw.get('ylim', None))
         #
         # Draw or output the figure to a file
-        #        
+        #
         _draw_fig(filename, overwrite)
     else:
         print('** WARNING ** vizdataquality, plot.py, multiplot(): The plottype is not valid:', plottype)
@@ -609,7 +609,7 @@ def scalar_bar(data, perceptual_threshold=0.05, number_of_variables_per_row=None
     # Perceptual discontinuity
     #
     axis_limits = ax_kw.get('ylim' if vert else 'xlim', None)
-    
+
     if perceptual_threshold is None:
         # Plot the values in the input data frame
         plotdata = data
@@ -628,10 +628,10 @@ def scalar_bar(data, perceptual_threshold=0.05, number_of_variables_per_row=None
         #ax = fig.add_subplot()
     else:
         ax = ax_input
-        
+
     # The index contains the variable names
     xlabels = plotdata.index.to_list()
-    
+
     # Store the data quality attribute in an array
     if type(plotdata) is pd.Series:
         name = plotdata.name
@@ -641,31 +641,31 @@ def scalar_bar(data, perceptual_threshold=0.05, number_of_variables_per_row=None
         name = plotdata.columns[0]
         row_values = plotdata[name].to_numpy()
         stack = {}
-        
+
         for col in plotdata.columns[1:]:
             stack[col] = plotdata[col].to_numpy()
 
     # By default, draw axis labels  at the end of the bars
     threshold = None
-    
+
     try:
         if isinstance(axis_limits, tuple):
             # Threshold defines whether an axis label will be drawn at the end of a bar or within it
             threshold = (axis_limits[1] - max(0, axis_limits[0])) * 0.2
     except:
         pass
-    
+
     try:
         # If necessary, extend the arrays to accommodate any dummy variables at the end of the plot
         num_bars_in_row = max(len(plotdata), number_of_variables_per_row)
         num_append = num_bars_in_row - len(plotdata)
         row_values = np.append(row_values, [0] * num_append)
         xlabels = xlabels + [''] * num_append
-        
+
         if isinstance(stack, dict):
             for key, value in stack.items():
                 stack[key] = np.append(value, [0] * num_append)
-                
+
         #print('stack', stack)
     except:
         # Just plot the variables
@@ -687,16 +687,16 @@ def scalar_bar(data, perceptual_threshold=0.05, number_of_variables_per_row=None
         if datalabels:
             # Draw axis labels  at the end of the bars
             bar_labels = [str(data.values[i]) for i in range(len(data))]
-                        
+
             if num_bars_in_row > len(bar_labels):
                 bar_labels += [''] * (num_bars_in_row - len(bar_labels))
-                
+
             ax.bar_label(p, labels=bar_labels, padding=label_padding)
     else:
         # Stacked bar chart
         bottom = np.zeros(num_bars_in_row)
         l1 = 0
-        
+
         for key, value in stack.items():
             if value.max() > 0:
                 # Check there are values to be plotted
@@ -710,43 +710,43 @@ def scalar_bar(data, perceptual_threshold=0.05, number_of_variables_per_row=None
                     if threshold is None:
                         # Draw axis labels  at the end of the bars
                         bar_labels = ['' if row_values[i] == 0 else str(data.values[i]) for i in range(len(data))]
-                        
+
                         if num_bars_in_row > len(bar_labels):
                             bar_labels += [''] * (num_bars_in_row - len(bar_labels))
-                            
+
                         ax.bar_label(p, labels=bar_labels, padding=label_padding)
                     else:
                         # Threshold defines whether an axis label will be drawn at the end of a bar or within it
                         # NB: There should be only one item in the stack for each stacked bar
                         bar_labels = ['' if value[i] < threshold else str(data.values[i]) for i in range(len(data))]
-                        
+
                         if num_bars_in_row > len(bar_labels):
                             bar_labels += [''] * (num_bars_in_row - len(bar_labels))
-                            
-                        ax.bar_label(p, labels=bar_labels, label_type='center')                    
+
+                        ax.bar_label(p, labels=bar_labels, label_type='center')
                         bar_labels = ['' if value[i] >= threshold or value[i] == 0 else str(data.values[i]) for i in range(len(data))]
-                        
+
                         if num_bars_in_row > len(bar_labels):
                             bar_labels += [''] * (num_bars_in_row - len(bar_labels))
-                            
+
                         ax.bar_label(p, labels=bar_labels, padding=label_padding)
-                
+
                 bottom += value
-            
+
             # Increment colour number
             l1 += 1
-        
+
         if legend:
             ax.legend(**legend_kw)
         # Add legend to the figure, so there is only one legend if multiplot() was called
         #fig=plt.gcf()
         #fig.legend(**legend_kw)
-                
+
     if vert:
         # Set the default axis labels if none have been supplied as ax_kw
         if 'xlabel' not in axkwargs:
             axkwargs['xlabel'] = 'Variable'
-        
+
         if 'ylabel' not in axkwargs:
             axkwargs['ylabel'] = name
 
@@ -762,21 +762,21 @@ def scalar_bar(data, perceptual_threshold=0.05, number_of_variables_per_row=None
         # Set the default axis labels if none have been supplied as ax_kw
         if 'xlabel' not in axkwargs:
             axkwargs['xlabel'] = name
-        
+
         if 'ylabel' not in axkwargs:
             axkwargs['ylabel'] = 'Variable'
 
         ax.set(**axkwargs)
-        
+
         if abs(xlabels_rotate) > 0.0:
             ax.tick_params('x', labelrotation=xlabels_rotate)
-            
+
         ax.xaxis.set_major_formatter(mpl.ticker.FuncFormatter(lambda x, p: format(int(x), ',')))
         # Create the Y ticks (including any dummy variables)
         ax.set_yticks(range(num_bars_in_row))
         ax.set_yticklabels(xlabels)
         ax.set_ylim(-0.5, num_bars_in_row - 0.5)
-        
+
     if ax_input is None:
         _draw_fig(filename, overwrite)
 
@@ -822,13 +822,13 @@ def table(data, ax_input=None, include_index=False, auto_column_width=True, file
         fig.patch.set_visible(False)
     else:
         ax = ax_input
-    
+
     #hide the axes
     ax.axis('off')
     ax.axis('tight')
 
     ax.set(**axkwargs)
-    
+
     # Get the table's data
     if isinstance(data, pd.Series):
         if include_index:
@@ -908,7 +908,7 @@ def text(plotdata, number_of_variables_per_row=None, ax_input=None, legend=True,
         fig.set(**fig_kw)
     else:
         ax = ax_input
-    
+
     # The index contains the variable names
     xlabels = plotdata.index.to_list()
 
@@ -918,7 +918,7 @@ def text(plotdata, number_of_variables_per_row=None, ax_input=None, legend=True,
     # Hide the X ticks and labels
     ax.set_xticklabels([])
     ax.tick_params('x', bottom=False)
-    
+
     ax.set_yticks(range(num_bars_in_row))
     ax.set_yticklabels(xlabels)
     ax.set_ylim(-0.5, num_bars_in_row - 0.5)
@@ -927,10 +927,10 @@ def text(plotdata, number_of_variables_per_row=None, ax_input=None, legend=True,
         axkwargs['ylabel'] = 'Variable'
 
     ax.set(**axkwargs)
-    
+
     for l1 in range(len(plotdata)):
         ax.annotate(plotdata.iloc[l1], (0.03, l1))
-                    
+
     if ax_input is None:
         _draw_fig(filename, overwrite)
 
@@ -981,11 +981,11 @@ def boxplot(data, number_of_variables_per_row=None, ax_input=None, vert=True, xl
     #
     boxes = []
     minmax = [None, None]
-    
+
     for index, value in data.items():
         # Convert value (a comma-separated string) into a list
         strvals = value.split(',')
-        
+
         if len(strvals) == 5:
             try:
                 # Check whether the first value is numeric
@@ -994,7 +994,7 @@ def boxplot(data, number_of_variables_per_row=None, ax_input=None, vert=True, xl
             except:
                 pass
                 numeric_boxplot = False
-            
+
             # The number of values is correct for a box plot
             if numeric_boxplot:
                 # Assume the values are numbers, so convert the values to floats
@@ -1007,7 +1007,7 @@ def boxplot(data, number_of_variables_per_row=None, ax_input=None, vert=True, xl
                 vals = pd.to_datetime(pd.Series(strvals)).values
                 # Append this box plot's parameters to the list
                 boxes.append({'label': index, 'whislo': vals[0], 'q1': vals[1], 'med': vals[2], 'q3': vals[3], 'whishi': vals[4], 'fliers': []})
-                
+
                 # Min and max date/time
                 if minmax[0] is None:
                     minmax[0] = vals[0]
@@ -1031,7 +1031,7 @@ def boxplot(data, number_of_variables_per_row=None, ax_input=None, vert=True, xl
     except:
         pass
         num_bars_in_row = len(boxes)
-        
+
     if len(boxes) == 0:
         print('** WARNING ** vizdataquality, plot.py, boxplot(): No variables to be plotted.')
     elif vert:
@@ -1040,17 +1040,17 @@ def boxplot(data, number_of_variables_per_row=None, ax_input=None, vert=True, xl
         # Set the default axis labels if none have been supplied as ax_kw
         if 'xlabel' not in axkwargs:
             axkwargs['xlabel'] = 'Variable'
-        
+
         if 'ylabel' not in axkwargs:
             axkwargs['ylabel'] = data.name
 
         ax.set(**axkwargs)
         # Set the X axis limit (including any dummy variables)
         ax.set_xlim(0.5, num_bars_in_row + 0.5)
-        
+
         if abs(xlabels_rotate) > 0.0:
             ax.tick_params('x', labelrotation=xlabels_rotate)
-            
+
         if time_axis:
             ax.yaxis.set_major_formatter(mpl.dates.DateFormatter('%H:%M:%S'))
     else:
@@ -1059,20 +1059,20 @@ def boxplot(data, number_of_variables_per_row=None, ax_input=None, vert=True, xl
         # Set the default axis labels if none have been supplied as ax_kw
         if 'xlabel' not in axkwargs:
             axkwargs['xlabel'] = data.name
-        
+
         if 'ylabel' not in axkwargs:
             axkwargs['ylabel'] = 'Variable'
 
         ax.set(**axkwargs)
         # Set the Y axis limit (including any dummy variables)
         ax.set_ylim(0.5, num_bars_in_row + 0.5)
-        
+
         if abs(xlabels_rotate) > 0.0:
             ax.tick_params('x', labelrotation=xlabels_rotate)
 
         if time_axis:
             ax.xaxis.set_major_formatter(mpl.dates.DateFormatter('%H:%M:%S'))
-    
+
     if ax_input is None:
         _draw_fig(filename, overwrite)
 
@@ -1129,35 +1129,35 @@ def violinplot(data, number_of_variables_per_row=None, ax_input=None, vert=True,
 
     # Create the violoin plots
     ax.violinplot(plotdata, vert=vert, **kwargs)
-        
+
     if vert:
         # Set the default axis labels if none have been supplied as ax_kw
         if 'xlabel' not in axkwargs:
             axkwargs['xlabel'] = 'Variable'
-        
+
         if 'ylabel' not in axkwargs:
             axkwargs['ylabel'] = 'Value'
 
         ax.set(**axkwargs)
-        
+
         #if abs(xlabels_rotate) > 0.0:
         #    ax.tick_params('x', labelrotation=xlabels_rotate)
-            
+
         ax.set_xticks(range(1, len(columns)+1))
         ax.set_xticklabels(columns, rotation=xlabels_rotate)
     else:
         # Set the default axis labels if none have been supplied as ax_kw
         if 'xlabel' not in axkwargs:
             axkwargs['xlabel'] = 'Value'
-        
+
         if 'ylabel' not in axkwargs:
             axkwargs['ylabel'] = 'Variable'
 
         ax.set(**axkwargs)
-        
+
         if abs(xlabels_rotate) > 0.0:
             ax.tick_params('x', labelrotation=xlabels_rotate)
-            
+
         ax.set_yticks(range(1, len(columns)+1))
         ax.set_yticklabels(columns)#, rotation=xlabels_rotate)
 
@@ -1199,7 +1199,7 @@ def dot_whisker(data, number_of_variables_per_row=None, ax_input=None, vert=True
     """
     axkwargs = ax_kw.copy()
     kw = kwargs.copy()
-    
+
     if 'color' not in kw:
         # Apply the 2nd colour in the colourmap
         kw['color'] = plt.rcParams['axes.prop_cycle'].by_key()['color'][1]
@@ -1220,11 +1220,11 @@ def dot_whisker(data, number_of_variables_per_row=None, ax_input=None, vert=True
     whiskery = []
     whiskererr = []
     pos = 0
-    
+
     for index, value in data.items():
         # The index is the variable name. Convert value (a comma-separated string) into a list
         strvals = value.split(',')
-        
+
         if len(strvals) == 2:
             #print(strvals)
             # The number of values is correct for a dot or whisker plot
@@ -1238,16 +1238,16 @@ def dot_whisker(data, number_of_variables_per_row=None, ax_input=None, vert=True
                 whiskerx.append(pos)
                 whiskery.append(0.5 * sum(vals))
                 whiskererr.append(abs(vals[0] - vals[1]) * 0.5)
-                
+
         pos = pos + 1
-            
+
 
     if len(dotx) == 0 and len(whiskerx) == 0:
         print('** WARNING ** vizdataquality, plot.py, dot_whisker(): No variables to be plotted.')
     else:
         # The index contains the variable names
         xlabels = data.index.to_list()
-    
+
         try:
             # If necessary, extend the arrays to accommodate any dummy variables at the end of the plot
             num_bars_in_row = max(len(data), number_of_variables_per_row)
@@ -1256,26 +1256,26 @@ def dot_whisker(data, number_of_variables_per_row=None, ax_input=None, vert=True
             # Just plot the variables
             pass
             num_bars_in_row = len(data)
-    
+
         if vert:
             if len(dotx) > 0:
                 ax.scatter(dotx, doty, **kw)
-        
+
             if len(whiskerx) > 0:
                 ax.errorbar(whiskerx, whiskery, yerr=whiskererr, fmt='none', capsize=4, **kw)
 
             # Set the default axis labels if none have been supplied as ax_kw
             if 'xlabel' not in axkwargs:
                 axkwargs['xlabel'] = 'Variable'
-            
+
             if 'ylabel' not in axkwargs:
                 axkwargs['ylabel'] = data.name
-            
+
             # For multiplot(), this prevents Matplotlib from autoscaling the shared Y axis
             #if 'ylim' not in axkwargs:
             #    # By default, start the Y axis at the origin
             #    axkwargs['ylim'] = 0
-    
+
             ax.set(**axkwargs)
             # Create the X ticks (including any dummy variables)
             ax.set_xticks(range(num_bars_in_row))
@@ -1285,33 +1285,33 @@ def dot_whisker(data, number_of_variables_per_row=None, ax_input=None, vert=True
         else:
             if len(dotx) > 0:
                 ax.scatter(doty, dotx, **kw)
-        
+
             if len(whiskerx) > 0:
                 ax.errorbar(whiskery, whiskerx, xerr=whiskererr, fmt='none', capsize=4, **kw)
 
             # Set the default axis labels if none have been supplied as ax_kw
             if 'xlabel' not in axkwargs:
                 axkwargs['xlabel'] = data.name
-            
+
             # For multiplot(), this prevents Matplotlib from autoscaling the shared Y axis
             #if 'xlim' not in axkwargs:
             #    # By default, start the X axis at the origin
             #    axkwargs['xlim'] = 0
-            
+
             if 'ylabel' not in axkwargs:
                 axkwargs['ylabel'] = 'Variable'
-    
+
             ax.set(**axkwargs)
-            
+
             if abs(xlabels_rotate) > 0.0:
                 ax.tick_params('x', labelrotation=xlabels_rotate)
-                
+
             ax.xaxis.set_major_formatter(mpl.ticker.FuncFormatter(lambda x, p: format(int(x), ',')))
             # Create the Y ticks (including any dummy variables)
             ax.set_yticks(range(num_bars_in_row))
             ax.set_yticklabels(xlabels)
             ax.set_ylim(-0.5, num_bars_in_row - 0.5)
-            
+
     if ax_input is None:
         _draw_fig(filename, overwrite)
 
@@ -1354,7 +1354,7 @@ def lollipop(data, number_of_variables_per_row=None, ax_input=None, vert=True, x
     """
     axkwargs = ax_kw.copy()
     kw = kwargs.copy()
-    
+
     if 'color' not in kw:
         # Apply the 3rd colour in the colourmap
         kw['color'] = plt.rcParams['axes.prop_cycle'].by_key()['color'][2]
@@ -1368,17 +1368,17 @@ def lollipop(data, number_of_variables_per_row=None, ax_input=None, vert=True, x
         ax = ax_input
 
     if continuous_value_axis:
-        # Determine whether the index is just numerical values    
+        # Determine whether the index is just numerical values
         numerical_values = True if all(type(e) in (int, float) for e in data.index) else False
     else:
         numerical_values = False
-        
+
     if numerical_values:
         plotdata = data
     else:
         # Sort the series so that the values are plotted in order
         plotdata = data.sort_index()#ascending=False)
-        
+
     #print('numerical_values', numerical_values)
     #print(plotdata)
     num_values = len(plotdata)
@@ -1386,21 +1386,21 @@ def lollipop(data, number_of_variables_per_row=None, ax_input=None, vert=True, x
     dotx = []
     doty = []
     pos = 0
-    
+
     for index, value in plotdata.items():
-        
+
         if numerical_values:
             dotx.append(index)
         else:
             dotx.append(pos)
-            
+
         doty.append(value)
         pos = pos + 1
 
     if len(dotx) > 0:
         # The index contains the variable names
         xlabels = plotdata.index.to_list()
-    
+
         try:
             # If necessary, extend the arrays to accommodate any dummy variables at the end of the plot
             num_values = max(len(data), number_of_variables_per_row)
@@ -1409,22 +1409,22 @@ def lollipop(data, number_of_variables_per_row=None, ax_input=None, vert=True, x
             # Just plot the variables
             pass
             num_values = len(data)
-    
+
         if vert:
             ax.scatter(dotx, doty, **kw)
-            
+
             for l1 in range(len(dotx)):
                 ax.plot([dotx[l1], dotx[l1]], [0, doty[l1]], **kw)
 
             # Set the default axis labels if none have been supplied as ax_kw
             if 'xlabel' not in axkwargs:
                 axkwargs['xlabel'] = 'Value'
-            
+
             if 'ylabel' not in axkwargs:
                 axkwargs['ylabel'] = 'Count'#plotdata.name.capitalize()
-    
+
             ax.set(**axkwargs)
-            
+
             if datalabels:
                 # This is a hack, but it works for default-sized markers
                 limits = ax.get_ylim()
@@ -1432,7 +1432,7 @@ def lollipop(data, number_of_variables_per_row=None, ax_input=None, vert=True, x
 
                 for l1 in range(len(dotx)):
                     ax.text(dotx[l1], doty[l1] + offset, str(doty[l1]), horizontalalignment='center', verticalalignment='bottom')
-            
+
             if numerical_values:
                 ax.set_xlim(plotdata.index.min()-0.5, plotdata.index.max()+0.5)
                 ax.xaxis.set_major_locator(mpl.ticker.MaxNLocator(integer=True))
@@ -1443,25 +1443,25 @@ def lollipop(data, number_of_variables_per_row=None, ax_input=None, vert=True, x
                 # Create the X ticks (including any dummy variables)
                 ax.set_xticks(range(num_values))
                 ax.set_xticklabels(xlabels, rotation=xlabels_rotate)
-            
+
             # Commented out (see below)
             #ax.yaxis.set_major_locator(mpl.ticker.MaxNLocator(integer=True))
             ax.yaxis.set_major_formatter(mpl.ticker.FuncFormatter(lambda x, p: format(int(x), ',')))
         else:
             ax.scatter(doty, dotx, **kw)
-            
+
             for l1 in range(len(dotx)):
                 ax.plot([0, doty[l1]], [dotx[l1], dotx[l1]], **kw)
-            
+
             # Set the default axis labels if none have been supplied as ax_kw
             if 'xlabel' not in axkwargs:
                 axkwargs['xlabel'] = 'Count'#plotdata.name.capitalize()
-            
+
             if 'ylabel' not in axkwargs:
                 axkwargs['ylabel'] = 'Value'
-    
+
             ax.set(**axkwargs)
-            
+
             if datalabels:
                 # This is a hack, but it works for default-sized markers
                 limits = ax.get_xlim()
@@ -1469,7 +1469,7 @@ def lollipop(data, number_of_variables_per_row=None, ax_input=None, vert=True, x
 
                 for l1 in range(len(dotx)):
                     ax.text(doty[l1] + offset, dotx[l1], str(doty[l1]), horizontalalignment='left', verticalalignment='center')
-            
+
             if numerical_values:
                 ax.set_ylim(plotdata.index.min()-0.5, plotdata.index.max()+0.5)
                 ax.yaxis.set_major_locator(mpl.ticker.MaxNLocator(integer=True))
@@ -1480,19 +1480,19 @@ def lollipop(data, number_of_variables_per_row=None, ax_input=None, vert=True, x
                 # Create the X ticks (including any dummy variables)
                 ax.set_yticks(range(num_values))
                 ax.set_yticklabels(xlabels, rotation=xlabels_rotate)
-                
+
             # NB: AT one point this was commented out because it causes a crash for some plots if axkwargs contains 'xticks'
             #
             # Now commented out because it sometimes causes too many tick labels
             #ax.xaxis.set_major_locator(mpl.ticker.MaxNLocator(integer=True))
             ax.xaxis.set_major_formatter(mpl.ticker.FuncFormatter(lambda x, p: format(int(x), ',')))
-            
+
             #if abs(xlabels_rotate) > 0.0:
             #    ax.tick_params('x', labelrotation=xlabels_rotate)
 
     else:
         print('** WARNING ** vizdataquality, plot.py, lollipop(): No variables to be plotted.')
-            
+
     if ax_input is None:
         _draw_fig(filename, overwrite)
 
@@ -1536,11 +1536,11 @@ def datetime_counts(data, component='raw data', gap_threshold=None, show_gaps=Tr
     elif component.lower() in ['raw data', 'year', 'month', 'dayofweek', 'hour', 'minute', 'second']:
         axkwargs = ax_kw.copy()
         kw = kwargs.copy()
-        
+
         if 'color' not in kw:
             # Use the first color
             kw['color'] = plt.rcParams['axes.prop_cycle'].by_key()['color'][0]
-    
+
         # Calculate the number of times each value occurs, sort them and store the result in a data frame
         #value_counts = data.value_counts().to_frame().reset_index().rename(columns={'index': 'Value', data.name: 'Count'})
         #value_counts = data.value_counts().sort_index().to_frame().reset_index().rename(columns={data.name: 'Value', 'count': 'Count'})
@@ -1555,17 +1555,17 @@ def datetime_counts(data, component='raw data', gap_threshold=None, show_gaps=Tr
 
         comp = component.lower()
         xlabel = comp[0].upper() + comp[1:]
-        
+
         if comp == 'raw data':
             # The width of the plot in pixels
             num_pixels = plt.rcParams['figure.figsize'][0] * plt.rcParams['figure.dpi']
             # Max number of unique values to be plotted
             max_unique = int(num_pixels / 5)
-            
+
             if len(value_counts) > max_unique:
                 # Try to find a coarser datetime granularity
                 granularity = None
-                
+
                 for u in ['Y', 'M', 'D', 'h', 'm', 's']:
                     s = value_counts['Value'].apply(lambda x: np.datetime64(x, u))
                     #if len(value_counts['Value'].apply(lambda x: np.datetime64(x, u)).unique()) <= max_unique:
@@ -1575,23 +1575,23 @@ def datetime_counts(data, component='raw data', gap_threshold=None, show_gaps=Tr
                     else:
                         # Too fine grained
                         break
-                        
+
                 if granularity is not None:
                     #value_counts['Value2'] = value_counts['Value'].apply(lambda x: np.datetime64(x, granularity))
                     grouped = value_counts[['Value2', 'Count']].groupby('Value2', sort=True)['Count'].sum().reset_index()
                     value_counts = grouped.rename(columns={'Value2': 'Value'})
-                    
+
             xmin = value_counts['Value'].min()
             xmax = value_counts['Value'].max()
         else:
             # Plot a component (e.g., 'year')
             xmin = 0
-            
+
             if comp == 'year':
                 value_counts['Part'] = value_counts['Value'].dt.year
                 xmin = value_counts['Part'].min()
                 xmax = value_counts['Part'].max()
-                
+
                 if xmax - xmin <= 0.0:
                     # The data is only for a single year, so make the X axis span 3 years
                     #xticklabels = [xmin]
@@ -1626,14 +1626,14 @@ def datetime_counts(data, component='raw data', gap_threshold=None, show_gaps=Tr
                 xmax = 60#59
                 xinterval = 15
                 #xinteger_component= True
-        
+
             # Adjust the min/max to leave a space at both ends of the X axis
             #xmin -= 0.5
             #xmax += 0.5
-                
+
             # Calculate the number of times each value of Part occurs
             groups = value_counts.groupby('Part')['Count'].sum().sort_index()
-            
+
         # Set the default axis labels if none have been supplied as ax_kw
         if 'xlabel' not in axkwargs:
             axkwargs['xlabel'] = xlabel
@@ -1646,27 +1646,27 @@ def datetime_counts(data, component='raw data', gap_threshold=None, show_gaps=Tr
             fig.autofmt_xdate()
         else:
             ax = ax_input
-    
+
         if 'xlim' not in axkwargs:
             axkwargs['xlim'] = (xmin, xmax)
-    
+
         if 'ylim' not in axkwargs:
             axkwargs['ylim'] = 0
-    
+
         if 'ylabel' not in axkwargs:
             axkwargs['ylabel'] = 'Count'
-    
+
         if comp == 'raw data' or len(groups) > 0:
-            
+
             if comp != 'raw data' and show_gaps:
                 # The first item
                 x = [groups.index[0]]
                 y = [groups.values[0]]
-                
+
                 for index, value in groups.iloc[1:].items():
                     # Iterate over the other items
                     if index <= x[-1] + gthresh:
-                        # This item is part of a continuous sequence of months, etc. 
+                        # This item is part of a continuous sequence of months, etc.
                         x.append(index)
                         y.append(value)
                     else:
@@ -1676,10 +1676,10 @@ def datetime_counts(data, component='raw data', gap_threshold=None, show_gaps=Tr
                         elif len(x) >= 2:
                             # Plot a polyline (the last item(s) were in a sequence)
                             ax.plot(x, y, **kw)
-                            
+
                         x = [index]
                         y = [value]
-        
+
                 # Plot any remaining data
                 if len(x) == 1:
                     # Plot a point
@@ -1695,7 +1695,7 @@ def datetime_counts(data, component='raw data', gap_threshold=None, show_gaps=Tr
                 else:
                     x = groups.index
                     y = groups.values
-                    
+
                 if len(x) == 1:
                     # A single point
                     ax.scatter(x, y, **kw)
@@ -1704,17 +1704,17 @@ def datetime_counts(data, component='raw data', gap_threshold=None, show_gaps=Tr
                     ax.plot(x, y, **kw)
 
             ax.set(**axkwargs)
-            
+
             if xticklabels is None:
                 #ax.xaxis.set_major_locator(mpl.ticker.MaxNLocator(integer=True))
                 if True or abs(xlabels_rotate) > 0.0:
                     # Set to true because Matplotlib otherwise rotates the labels automatically
                     ax.tick_params('x', labelrotation=xlabels_rotate)
-                
+
                 if comp == 'year':
                     # Now commented out because it sometimes causes too many tick labels
                     #ax.xaxis.set_major_locator(mpl.ticker.MaxNLocator(integer=True))
-                    
+
                     # If there is a small range of years then Matplotlib's tick labels may include decimals
                     xlabs = ax.get_xticklabels()
                     new_ticks = []
@@ -1730,12 +1730,12 @@ def datetime_counts(data, component='raw data', gap_threshold=None, show_gaps=Tr
                                 new_labels.append(str(ival))
                         except:
                             raise
-                            
+
                     # Specify the new, integer-only labels
                     ax.set_xticks(new_ticks, new_labels, rotation=xlabels_rotate)
                     # Commented out because all the labels will now be integers
                     #ax.xaxis.set_major_formatter(mpl.ticker.FuncFormatter(lambda x, p: format(int(x))))
-                
+
                 if xinterval is not None:
                     ax.xaxis.set_major_locator(mpl.ticker.MultipleLocator(xinterval))
             else:
@@ -1746,7 +1746,7 @@ def datetime_counts(data, component='raw data', gap_threshold=None, show_gaps=Tr
                 else:
                     # xmin used in range because months start from 1, whereas days of the week start from 0
                     ax.set_xticks(range(xmin, xmin+len(xticklabels)), xticklabels, rotation=xlabels_rotate)
-        
+
             # Now commented out because it sometimes causes too many tick labels
             #ax.yaxis.set_major_locator(mpl.ticker.MaxNLocator(integer=True))
             ax.yaxis.set_major_formatter(mpl.ticker.FuncFormatter(lambda x, p: format(int(x), ',')))
@@ -1754,6 +1754,6 @@ def datetime_counts(data, component='raw data', gap_threshold=None, show_gaps=Tr
             print('** WARNING ** vizdataquality, plot.py, datetime_counts(): No variables to be plotted.')
     else:
         print('** WARNING ** vizdataquality, plot.py, datetime_counts(): Invalid component:', component)
-                
+
     if ax_input is None:
         _draw_fig(filename, overwrite)

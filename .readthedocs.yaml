@@ -14,5 +14,7 @@ sphinx:
 
 python:
    install:
-     - method: poetry
+     - method: pip
        path: .
+       extra_requirements:
+         - doc

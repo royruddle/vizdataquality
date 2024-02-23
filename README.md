@@ -33,6 +33,10 @@ After installing vizdataquality, to follow theses tutorials interactively you wi
 python -m jupyter notebook notebooks
 ```
 
+## Development
+- Documentation is build on readthedocs.com from main branch
+- PyPi pulls on creating a release on project repository on GitHub.
+
 ## Notice
 The vizdataquality software is released under the Apache Licence, version 2.0. See [LICENCE](./LICENCE) for details.
 

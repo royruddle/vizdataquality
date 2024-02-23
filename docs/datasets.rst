@@ -1,4 +1,4 @@
-Hnadling datasets
+Handling datasets
 =================
 
 .. automodule:: vizdataquality.datasets

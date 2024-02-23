@@ -37,7 +37,7 @@ chardet = "^5.2.0"
 
 [tool.poetry.extras]
 notebooks = ["notebook", "matplotlib"]
-doc = ["Sphinx", "pydata-sphinx-theme", "myst-parser"]
+doc = ["Sphinx", "pydata-sphinx-theme", "myst-parser", "matplotlib"]
 test = ["pytest"]
 all = ["notebook", "matplotlib", "Sphinx", "pydata-sphinx-theme", "pytest", "myst-parser"]
 

@@ -16,5 +16,3 @@ python:
    install:
      - method: poetry
        path: .
-       extra_requirements:
-         - doc

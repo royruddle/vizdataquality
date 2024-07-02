@@ -46,6 +46,15 @@ def test_get_dataset_value_counts_1():
     assert df['Categorical (ints)'].dtype == 'object'
     assert df['Date'].dtype == 'datetime64[ns]'
 
+def test_get_dataset_value_counts_2():
+    num_rows, df = get_dataset('value counts 2')
+    assert num_rows == 10000
+    assert df['Q1'].sum() == num_rows / 2
+    assert df['Q2'].sum() == num_rows - 1
+    assert df['Q3'].sum() == num_rows
+    assert df['Q4'].sum() == 1
+    assert df['Q5'].sum() == 0
+
 # Test for invalid input
 def test_get_dataset_invalid():
     num_rows, __ = get_dataset('foo')

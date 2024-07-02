@@ -120,6 +120,15 @@ def get_dataset(option):
         #print(df.astype({'Categorical (ints)': 'object'}).dtypes)
         df = df0.astype({'Categorical (ints)': 'object'})
         df['Date'] = pd.to_datetime(df['Date'], yearfirst=True)
+    elif option == 'value counts 2':
+        num_records = 10000
+        data = {}
+        data['Q1'] = [True] * int(num_records / 2) + [False] * int(num_records / 2)
+        data['Q2'] = [True] * (num_records - 1) + [False]
+        data['Q3'] = [True] * num_records
+        data['Q4'] = [True] + [False] * (num_records - 1)
+        data['Q5'] = [False] * num_records
+        df = pd.DataFrame.from_dict(data)
         
     return len(df), df
     

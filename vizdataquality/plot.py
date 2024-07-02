@@ -107,16 +107,16 @@ def apply_perceptual_discontinuity_individually(input_data, perceptual_threshold
     Parameters
     ----------
     input_data : series or data frame
-        The data
+        The data.
     perceptual_threshold : float
-        An absolute value (axis_limits = None) or a percentage (0.0 - 1.0) of the axis limit max
-    axis_limits : None, int, float or (min, max) tuple
-        The axis limits
+        An absolute value (axis_limits = None) or a percentage (0.0 - 1.0) of the axis limit max.
+    axis_limits : None or (min, max) tuple
+        The axis limits. The default is None.
 
     Returns
     -------
-    Series or DataFrame
-        A series (the adjusted values) or dataframe (the adjusted values and, if a series was input then an extra column for each group of values for plotting as a stacked bar chart).
+    DataFrame
+        The adjusted values and, if a series was input, then two extra columns for stacked bar chart plotting of values that have been adjusted and not adjusted, respectively.
 
     """
     #data = input_data.copy()
@@ -157,7 +157,7 @@ def apply_perceptual_discontinuity_individually(input_data, perceptual_threshold
             data = input_data.apply(lambda x: x if x <= 0 else max(x, val1))
 
     else:
-        # The threshold is perceptual_threshold * axis_limits[1]
+        # The threshold is perceptual_threshold * axis_limits[1], which assumes that min = 0
         max_value = axis_limits[1]
         val1 = perceptual_threshold*max_value
         val2 = (1.0-perceptual_threshold)*max_value
@@ -217,7 +217,7 @@ def apply_perceptual_discontinuity_individually(input_data, perceptual_threshold
     return data
 
 
-def apply_perceptual_discontinuity_to_group(input_data, perceptual_threshold):
+def apply_perceptual_discontinuity_to_group(input_data, perceptual_threshold, axis_limits=None):
     """
     Apply perceptual discontinuity threshold to a group of values. The values are adjusted so each is >= perceptual_threshold * sum, but the sum is unchanged.
     That is achieved by increasing values that are below the threshold and decreasing values that are above the threshold.
@@ -227,7 +227,9 @@ def apply_perceptual_discontinuity_to_group(input_data, perceptual_threshold):
     input_data : series or data frame
         The data
     perceptual_threshold : float
-        Preceptual discontinuity threshold (0.0 - 1.0)
+        An absolute value (axis_limits = None) or a percentage (0.0 - 1.0) of the axis limit max.
+    axis_limits : None or (min, max) tuple
+        The axis limits. The default is None.
 
     Returns
     -------
@@ -236,10 +238,15 @@ def apply_perceptual_discontinuity_to_group(input_data, perceptual_threshold):
 
     """
     data = input_data.copy()
+    
+    if axis_limits is None or not isinstance(axis_limits, tuple):
+        p = perceptual_threshold
+    else:
+        # The threshold is perceptual_threshold * axis_limits[1], which assumes that min = 0
+        p = perceptual_threshold * axis_limits[1]
 
     if isinstance(data, pd.Series):
         total = data.sum()
-        p = perceptual_threshold * total
         # First, make sure every value is >= threshold
         data = data.apply(lambda x: 0.0 if x <= 0.0 else max(x, p))
 
@@ -252,14 +259,13 @@ def apply_perceptual_discontinuity_to_group(input_data, perceptual_threshold):
     elif isinstance(data, pd.DataFrame):
         for col in data.columns:
             total = data[col].sum()
-            p = perceptual_threshold * total
             # First, make sure every value is >= threshold
             data[col] = data[col].apply(lambda x: 0.0 if x <= 0.0 else max(x, p))
 
             if data[col].sum() > total:
                 # The sum of the values is > max_value, so calculate the excess
                 e = float(data[col].sum() - total)
-                sump = float(data[col].sum() - p * (data.shape[1]))
+                sump = float(data[col].sum() - p * (data.shape[0]))
                 # Reduce the values proportionately, making sure every value is still >= threshold
                 data[col] = data[col].apply(lambda x: x if x <= p else x - e*(x-p)/sump)
 
@@ -428,7 +434,7 @@ def plotgrid(tasktype, data, num_rows=None, num_cols=None, vert=True, xlabels_ro
         print('** WARNING ** vizdataquality, plot.py, plotgrid(): The tasktype is not valid:', tasktype)
 
 
-def multiplot(plottype, data, perceptual_threshold=0.05, number_of_variables_per_row=None, vert=True, xlabels_rotate=0.0, datalabels=False, continuous_value_axis=True, filename=None, overwrite=False, plt_kw={}, fig_kw={}, ax_kw={}, legend_kw={}, **kwargs):
+def multiplot(plottype, data, perceptual_threshold=0.05, number_of_variables_per_row=None, vert=True, xlabels_rotate=0.0, clist=[], datalabels=False, legend=True, continuous_value_axis=True, filename=None, overwrite=False, plt_kw={}, fig_kw={}, ax_kw={}, legend_kw={}, **kwargs):
     """
     Plot a data quality attribute (e.g., number of missing values in each variable).
     The variables can be plotted on multiple rows of bar charts.
@@ -437,10 +443,11 @@ def multiplot(plottype, data, perceptual_threshold=0.05, number_of_variables_per
     Parameters
     ----------
     plottype : string
-        'bar', 'box', 'dot-or-whisker', 'lollipop' or 'violin'
-    data : dataframe (violinplot only) or series (all plot types)
+        'bar', 'box', 'dot-or-whisker', 'lollipop', 'stackedbar' or 'violin'
+    data : dataframe (stackedbar or violinplot) or series (all plot types except stackedbar)
         'bar', 'box', 'dot-or-whisker': Series containing the variable names (index) and data quality attribute to be plotted (e.g., number of missing values in each variable)
         'lollipop': Series containing value counts.
+        'stackedbar': Dataframe where each column is a bar and the index/rows are the stacks
         'violin': The values of one (Series) or more columns (dataframe)
     perceptual_threshold : float
         Preceptual discontinuity threshold (0.0 - 1.0) or None
@@ -450,8 +457,12 @@ def multiplot(plottype, data, perceptual_threshold=0.05, number_of_variables_per
         True (vertical bars; the default) or False (horizontal)
     xlabels_rotate : float
         Angle to rotate X axis labels by (only used if vert = True)
+    clist : list, optional
+        A list of the colours to use (a different one for each stack in stacked bars). The default is an empty list (use the default colours).
     datalabels : boolean
-        Label each data point (False (default) or True)
+        Label each data point. The default is False.
+    legend: boolean
+        True (add a legend) or False (no legend). The default is True.
     continuous_value_axis : boolean
         Plot numerical/datetime values on a continuous axis to show any gaps in values. The default is True.
     filename : string
@@ -474,13 +485,14 @@ def multiplot(plottype, data, perceptual_threshold=0.05, number_of_variables_per
     None.
 
     """
-    if isinstance(data, pd.DataFrame) and plottype != 'violin':
+    if isinstance(data, pd.DataFrame) and plottype != 'violin' and plottype != 'stackedbar':
         print('** WARNING ** vizdataquality, plot.py, multiplot(): A dataframe cannot be used with a', plottype, 'plot')
-    elif plottype == 'bar' or plottype == 'box' or plottype == 'dot-or-whisker' or plottype == 'violin' or plottype == 'lollipop':
+    elif plottype == 'bar' or plottype == 'box' or plottype == 'dot-or-whisker' or plottype == 'lollipop' or plottype == 'stackedbar' or plottype == 'violin':
         axkwargs = ax_kw.copy()
         # Calculate the number of rows/columns of plots
-        if plottype == 'violin':
+        if plottype == 'violin' or plottype == 'stackedbar':
             if isinstance(data, pd.DataFrame):
+                # The dataframe columns are the violins/bars
                 num_subplots = int((data.shape[1] + number_of_variables_per_row - 1) / number_of_variables_per_row)
             else:
                 num_subplots = 1
@@ -507,7 +519,7 @@ def multiplot(plottype, data, perceptual_threshold=0.05, number_of_variables_per
             # Use a single label for each axis
             if plottype == 'violin':
                 default_axis_label = 'Value'
-            elif plottype == 'lollipop':
+            elif plottype == 'lollipop' or plottype == 'stackedbar':
                 default_axis_label = 'Count'
             else:
                 default_axis_label = data.name
@@ -537,7 +549,12 @@ def multiplot(plottype, data, perceptual_threshold=0.05, number_of_variables_per
             elif l1 == num_subplots - 1:
                 # This is the last of multiple rows
                 start = l1 * number_of_variables_per_row
-                end = len(data)
+                
+                if isinstance(data, pd.DataFrame):
+                    # stackedbar or violin
+                    end = data.shape[1]
+                else:
+                    end = len(data)
             else:
                 # All but the last of multiple rows
                 start = l1 * number_of_variables_per_row
@@ -548,14 +565,18 @@ def multiplot(plottype, data, perceptual_threshold=0.05, number_of_variables_per
 
             if plottype == 'bar':
                 # Add the legend to the first subplot
-                legend = True if l1 == 0 else False
-                scalar_bar(data.iloc[start:end], perceptual_threshold=perceptual_threshold, number_of_variables_per_row=number_of_variables_per_row, ax_input=ax, vert=vert, xlabels_rotate=xlabels_rotate, datalabels=datalabels, legend=legend, filename=filename, overwrite=overwrite, ax_kw=axkwargs, legend_kw=legend_kw, **kwargs)
+                add_legend = legend if l1 == 0 else False
+                scalar_bar(data.iloc[start:end], perceptual_threshold=perceptual_threshold, number_of_variables_per_row=number_of_variables_per_row, ax_input=ax, vert=vert, xlabels_rotate=xlabels_rotate, datalabels=datalabels, legend=add_legend, filename=filename, overwrite=overwrite, ax_kw=axkwargs, legend_kw=legend_kw, **kwargs)
             elif plottype == 'box':
                 boxplot(data.iloc[start:end], number_of_variables_per_row=number_of_variables_per_row, ax_input=ax, vert=vert, xlabels_rotate=xlabels_rotate, filename=filename, overwrite=overwrite, ax_kw=axkwargs, **kwargs)
             elif plottype == 'dot-or-whisker':
                 dot_whisker(data.iloc[start:end], number_of_variables_per_row=number_of_variables_per_row, ax_input=ax, vert=vert, xlabels_rotate=xlabels_rotate, filename=filename, overwrite=overwrite, ax_kw=axkwargs, **kwargs)
             elif plottype == 'lollipop':
                 lollipop(plotdata[start:end], number_of_variables_per_row=number_of_variables_per_row, ax_input=ax, vert=vert, xlabels_rotate=xlabels_rotate, datalabels=datalabels, continuous_value_axis=continuous_value_axis, filename=filename, overwrite=overwrite, ax_kw=axkwargs, **kwargs)
+            elif plottype == 'stackedbar':
+                # Add the legend to the first subplot
+                add_legend = legend if l1 == 0 else False
+                stacked_bar(data[data.columns[start:end]], perceptual_threshold=perceptual_threshold, number_of_variables_per_row=number_of_variables_per_row, ax_input=ax, vert=vert, xlabels_rotate=xlabels_rotate, clist=clist, datalabels=datalabels, legend=add_legend, filename=filename, overwrite=overwrite, ax_kw=axkwargs, legend_kw=legend_kw, **kwargs)
             elif plottype == 'violin':
                 violinplot(data[data.columns[start:end]], number_of_variables_per_row=number_of_variables_per_row, ax_input=ax, vert=vert, xlabels_rotate=xlabels_rotate, filename=filename, overwrite=overwrite, ax_kw=axkwargs, **kwargs)
 
@@ -585,29 +606,29 @@ def scalar_bar(data, perceptual_threshold=0.05, number_of_variables_per_row=None
     data : series
         Series containing the variable names (index) and data quality attribute to be plotted (e.g., number of missing values in each variable)
     perceptual_threshold : float
-        Preceptual discontinuity threshold (0.0 - 1.0) or None
+        Preceptual discontinuity threshold (0.0 - 1.0) or None. The default is 0.05.
     number_of_variables_per_row : int
-        None (plot all variables in one bar chart) or the number of variables to show in each row
+        None (plot all variables in one bar chart) or the number of variables to show in each row. The default is None.
     ax_input: axis or None
-        Matplotlib axis
+        Matplotlib axis. The default is None.
     vert: boolean
-        True (vertical bars; the default) or False (horizontal)
+        True (vertical bars; the default) or False (horizontal). The default is True.
     xlabels_rotate : float
-        Angle to rotate X axis labels by (only used if vert = True)
+        Angle to rotate X axis labels by (only used if vert = True). The default is 0.0.
     datalabels : boolean
         Label each data point. The default is False.
     legend: boolean
-        True (add a legend, if a stacked bar chart is plotted) or False (no legend)
+        NOT CURRENTLY USED. True (add a legend, if perceptual discontinuity is used) or False (no legend). The default is True.
     filename : string
-        None or a filename for the figure
+        None or a filename for the figure. The default is None.
     overwrite : boolean
-        False (do not overwrite file; the default) or True (overwrite file if it exists)
+        False (do not overwrite file; the default) or True (overwrite file if it exists). The default is False.
     fig_kw : dictionary
-        Keyword arguments for a Matplotlib Figure object
+        Keyword arguments for a Matplotlib Figure object. The default is an empty dictionary.
     ax_kw : dictionary
-        Keyword arguments for a Matplotlib Axes object
+        Keyword arguments for a Matplotlib Axes object. The default is an empty dictionary.
     legend_kw : dictionary
-        Keyword arguments for a Matplotlib legend
+        NOT CURRENTLY USED. Keyword arguments for a Matplotlib legend. The default is an empty dictionary.
     kwargs : dictionary
         Keyword arguments for a Matplotlib Axes.bar object
 
@@ -644,6 +665,8 @@ def scalar_bar(data, perceptual_threshold=0.05, number_of_variables_per_row=None
 
     # The index contains the variable names
     xlabels = plotdata.index.to_list()
+    # Set this to False to create stacks that use different colours for the original and adjusted values
+    percep_disc_onebar = True
 
     # Store the data quality attribute in an array
     if type(plotdata) is pd.Series:
@@ -654,9 +677,12 @@ def scalar_bar(data, perceptual_threshold=0.05, number_of_variables_per_row=None
         name = plotdata.columns[0]
         row_values = plotdata[name].to_numpy()
         stack = {}
-
-        for col in plotdata.columns[1:]:
-            stack[col] = plotdata[col].to_numpy()
+        
+        if percep_disc_onebar:
+            stack[plotdata.columns[1]] = plotdata[plotdata.columns[1:]].sum(axis=1).to_numpy()
+        else:
+            for col in plotdata.columns[1:]:
+                stack[col] = plotdata[col].to_numpy()
 
     # By default, draw axis labels  at the end of the bars
     threshold = None
@@ -714,9 +740,15 @@ def scalar_bar(data, perceptual_threshold=0.05, number_of_variables_per_row=None
             if value.max() > 0:
                 # Check there are values to be plotted
                 if vert:
-                    p = ax.bar(np.arange(num_bars_in_row), value, bottom=bottom, label=key, ec=edgecolour, color=stack_colours[l1], **kw)
+                    if percep_disc_onebar:
+                        p = ax.bar(np.arange(num_bars_in_row), value, bottom=bottom, label=key, **kw)
+                    else:
+                        p = ax.bar(np.arange(num_bars_in_row), value, bottom=bottom, label=key, ec=edgecolour, color=stack_colours[l1], **kw)
                 else:
-                    p = ax.barh(np.arange(num_bars_in_row), value, left=bottom, label=key, ec=edgecolour, color=stack_colours[l1], **kw)
+                    if percep_disc_onebar:
+                        p = ax.barh(np.arange(num_bars_in_row), value, left=bottom, label=key, **kw)
+                    else:
+                        p = ax.barh(np.arange(num_bars_in_row), value, left=bottom, label=key, ec=edgecolour, color=stack_colours[l1], **kw)
 
                 if datalabels:
                     # Draw bar labels for non-zero values in this stack
@@ -749,7 +781,7 @@ def scalar_bar(data, perceptual_threshold=0.05, number_of_variables_per_row=None
             # Increment colour number
             l1 += 1
 
-        if legend:
+        if percep_disc_onebar == False and legend:
             ax.legend(**legend_kw)
         # Add legend to the figure, so there is only one legend if multiplot() was called
         #fig=plt.gcf()
@@ -778,6 +810,252 @@ def scalar_bar(data, perceptual_threshold=0.05, number_of_variables_per_row=None
 
         if 'ylabel' not in axkwargs:
             axkwargs['ylabel'] = 'Variable'
+
+        ax.set(**axkwargs)
+
+        if abs(xlabels_rotate) > 0.0:
+            ax.tick_params('x', labelrotation=xlabels_rotate)
+
+        ax.xaxis.set_major_formatter(mpl.ticker.FuncFormatter(lambda x, p: format(int(x), ',')))
+        # Create the Y ticks (including any dummy variables)
+        ax.set_yticks(range(num_bars_in_row))
+        ax.set_yticklabels(xlabels)
+        ax.set_ylim(-0.5, num_bars_in_row - 0.5)
+
+    if ax_input is None:
+        _draw_fig(filename, overwrite)
+
+
+def stacked_bar(data, perceptual_threshold=0.05, number_of_variables_per_row=None, ax_input=None, vert=True, xlabels_rotate=0.0, clist=[], elist=[], datalabels=False, legend=True, filename=None, overwrite=False, fig_kw={}, ax_kw={}, legend_kw={}, **kwargs):
+    """
+    Create a bar chart showing a data quality attribute (e.g., number of missing values in each variable).
+    The length of each bar can be adjusted to ensure that important perceptual differences are visible.
+
+    Parameters
+    ----------
+    data : series or dataframe
+        The data to be plotted (single bar for a series; one bar per column for a dataframe). The index contains the names of the stacks. 
+    perceptual_threshold : float
+        Preceptual discontinuity threshold (0.0 - 1.0) or None. The default is 0.05.
+    number_of_variables_per_row : int
+        None (plot all variables in one bar chart) or the number of variables to show in each row. The default is None.
+    ax_input: axis or None
+        Matplotlib axis. The default is None.
+    vert: boolean
+        True (vertical bars; the default) or False (horizontal). The default is True.
+    xlabels_rotate : float
+        Angle to rotate X axis labels by (only used if vert = True). The default is 0.0.
+    clist : list, optional
+        The fill colours to use (a different one for each stack). The default is an empty list (use the default colours).
+    elist : list, optional
+        The edge colours to use (a different one for each stack). The default is an empty list (use the default colours).
+    datalabels : boolean
+        Label each data point. The default is False.
+    legend: boolean
+        True (add a legend) or False (no legend). The default is True.
+    filename : string
+        None or a filename for the figure. The default is None.
+    overwrite : boolean
+        False (do not overwrite file; the default) or True (overwrite file if it exists). The default is False.
+    fig_kw : dictionary
+        Keyword arguments for a Matplotlib Figure object. The default is an empty dictionary.
+    ax_kw : dictionary
+        Keyword arguments for a Matplotlib Axes object. The default is an empty dictionary.
+    legend_kw : dictionary
+        Keyword arguments for a Matplotlib legend. The default is an empty dictionary.
+    kwargs : dictionary
+        Keyword arguments for a Matplotlib Axes.bar object
+
+    Returns
+    -------
+    None.
+
+    """
+    axkwargs = ax_kw.copy()
+    kw = kwargs.copy()
+    #
+    # Perceptual discontinuity
+    #
+    axis_limits = ax_kw.get('ylim' if vert else 'xlim', None)
+
+    if perceptual_threshold is None:
+        # Plot the values in the input data frame
+        plotdata = data
+    else:
+        # Apply perceptual discontinuity threshold so that non-zero bars are visible and almost complete variables do not look complete
+        plotdata = apply_perceptual_discontinuity_to_group(data, perceptual_threshold, axis_limits)
+    #
+    # Plot axis
+    #
+    if ax_input is None:
+        fig, ax = plt.subplots()
+        fig.set(**fig_kw)
+    else:
+        ax = ax_input
+
+    # Store the data for the bar stacks in a dictionary
+    if isinstance(plotdata, pd.Series):
+        xlabel = 'Variable'
+        name = 'Count'
+        xlabels = [plotdata.name]
+        stack = {}
+        
+        for index, value in plotdata.items():
+            stack[index] = np.array([value])
+    else:
+        xlabel= 'Variable'
+        name = 'Count'
+        # The index contains the variable names
+        xlabels = plotdata.columns.to_list()
+        stack = {}
+
+        for l1 in range(len(plotdata)):
+            stack[plotdata.index[l1]] = plotdata.values[l1]
+            
+    # By default, draw axis labels  at the end of the bars
+    threshold = None
+    num_bars = 1 if isinstance(plotdata, pd.Series) else plotdata.shape[1]
+
+    try:
+        if isinstance(axis_limits, tuple):
+            # Threshold defines whether an axis label will be drawn at the end of a bar or within it
+            threshold = (axis_limits[1] - max(0, axis_limits[0])) * 0.2
+    except:
+        pass
+
+    try:
+        # If necessary, extend the arrays to accommodate any dummy variables at the end of the plot
+        num_bars_in_row = max(num_bars, number_of_variables_per_row)
+        num_append = num_bars_in_row - num_bars
+        xlabels = xlabels + [''] * num_append
+
+        if isinstance(stack, dict):
+            for key, value in stack.items():
+                stack[key] = np.append(value, [0] * num_append)
+    except:
+        # Just plot the variables
+        num_bars_in_row = num_bars
+        pass
+
+    # Set the colourmap
+    #stack_colours = [[1,1,1], [0.67,0.67,0.67], [0.33,0.33,0.33], [0,0,0]]
+    if isinstance(clist, list) and len(clist) == len(stack):
+        fillcolours = clist
+    else:
+        # Greyscale
+        #colours = [[i/(len(stack)-1.0), i/(len(stack)-1.0), i/(len(stack)-1.0)] for i in range(len(stack))]
+        fillcolours = None
+    
+    edgecolours = elist if isinstance(elist, list) and len(elist) == len(stack) else None
+    #if 'edgecolor' not in kw:
+    #    kw['edgecolor'] = [0,0,0]
+        
+    # Offset for some data value labels
+    label_padding = 10
+
+    #
+    # bar() and barh() calls are similar for vertical and horizontal bar chart
+    #
+    # Stacked bar chart
+    bottom = np.zeros(num_bars_in_row)
+    l1 = 0
+
+    for key, value in stack.items():
+
+        if value.max() > 0:
+            skw = kw.copy()
+            
+            # Set the colour for this bar
+            if skw.get('color', None) is None and fillcolours is not None:
+                skw['color'] = fillcolours[l1]
+        
+            if skw.get('edgecolor', None) is None and edgecolours is not None:
+                skw['edgecolor'] = edgecolours[l1]
+        
+            # Check there are values to be plotted
+            if vert:
+                p = ax.bar(np.arange(num_bars_in_row), value, bottom=bottom, label=key, **skw)
+            else:
+                p = ax.barh(np.arange(num_bars_in_row), value, left=bottom, label=key, **skw)
+
+            if datalabels:
+                # The input data values are used for the labels
+                if isinstance(data, pd.Series):
+                    # A single value
+                    input_values = data.loc[key]
+                else:
+                    input_values = data.values[l1]
+                    
+                # Draw bar labels for non-zero values in this stack
+                if threshold is None:
+                    # Draw axis labels  at the end of the bars
+                    if isinstance(data, pd.Series):
+                        bar_labels = [input_values]
+                    else:
+                        bar_labels = ['' if input_values[i] == 0 else str(input_values[i]) for i in range(data.shape[1])]
+
+                    if num_bars_in_row > len(bar_labels):
+                        bar_labels += [''] * (num_bars_in_row - len(bar_labels))
+
+                    ax.bar_label(p, labels=bar_labels, padding=label_padding)
+                else:
+                    # Threshold defines whether an axis label will be drawn at the end of a bar or within it
+                    # NB: There should be only one item in the stack for each stacked bar
+                    if isinstance(data, pd.Series):
+                        bar_labels = [input_values]
+                        
+                        if num_bars_in_row > len(bar_labels):
+                            bar_labels += [''] * (num_bars_in_row - len(bar_labels))
+
+                        if input_values >= threshold:
+                            ax.bar_label(p, labels=bar_labels, label_type='center')
+                        elif input_values > 0:
+                            ax.bar_label(p, labels=bar_labels, padding=label_padding)
+                    else:
+                        bar_labels = ['' if value[i] < threshold else str(input_values[i]) for i in range(data.shape[1])]
+
+                        if num_bars_in_row > len(bar_labels):
+                            bar_labels += [''] * (num_bars_in_row - len(bar_labels))
+
+                        ax.bar_label(p, labels=bar_labels, label_type='center')
+                        bar_labels = ['' if value[i] >= threshold or value[i] == 0 else str(input_values[i]) for i in range(data.shape[1])]
+
+                        if num_bars_in_row > len(bar_labels):
+                            bar_labels += [''] * (num_bars_in_row - len(bar_labels))
+
+                        ax.bar_label(p, labels=bar_labels, padding=label_padding)
+
+            bottom += value
+
+        # Increment colour number
+        l1 += 1
+
+    if legend:
+        ax.legend(**legend_kw)
+
+    if vert:
+        # Set the default axis labels if none have been supplied as ax_kw
+        if 'xlabel' not in axkwargs:
+            axkwargs['xlabel'] = xlabel
+
+        if 'ylabel' not in axkwargs:
+            axkwargs['ylabel'] = name
+
+        ax.set(**axkwargs)
+        # Create the X ticks (including any dummy variables)
+        ax.set_xticks(range(num_bars_in_row))
+        ax.set_xticklabels(xlabels, rotation=xlabels_rotate)
+        ax.set_xlim(-0.5, num_bars_in_row - 0.5)
+        #ax.yaxis.set_major_locator(mpl.ticker.MaxNLocator(integer=True))
+        ax.yaxis.set_major_formatter(mpl.ticker.FuncFormatter(lambda x, p: format(int(x), ',')))
+        #ax.ticklabel_format(axis='x', style='plain')
+    else:
+        # Set the default axis labels if none have been supplied as ax_kw
+        if 'xlabel' not in axkwargs:
+            axkwargs['xlabel'] = name
+
+        if 'ylabel' not in axkwargs:
+            axkwargs['ylabel'] = xlabel
 
         ax.set(**axkwargs)
 

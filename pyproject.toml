@@ -24,7 +24,7 @@ classifiers = [
 [tool.poetry.dependencies]
 python = ">=3.9,<3.12"
 numpy = "^1.24"
-pandas = "^1.5"
+pandas = "^2"
 tomli = "^2.0"
 matplotlib = "^3.7.2"
 
@@ -37,7 +37,7 @@ chardet = "^5.2.0"
 
 [tool.poetry.extras]
 notebooks = ["notebook", "matplotlib"]
-doc = ["Sphinx", "pydata-sphinx-theme", "myst-parser"]
+doc = ["Sphinx", "pydata-sphinx-theme", "myst-parser", "matplotlib"]
 test = ["pytest"]
 all = ["notebook", "matplotlib", "Sphinx", "pydata-sphinx-theme", "pytest", "myst-parser"]
 

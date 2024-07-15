@@ -4,6 +4,7 @@ on:
   push:
     paths-ignore:
       - '**/README.md'
+      - '.readthedocs.yml'
   pull_request:
     branches: [ main ]
 

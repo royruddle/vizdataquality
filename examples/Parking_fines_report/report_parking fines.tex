@@ -1,0 +1,157 @@
+\documentclass{article}
+\title{Data quality issues and profiling of a car park fines dataset}
+\usepackage{booktabs} % Required for inserting tables
+\usepackage{graphicx} % Required for inserting images
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+
+This report has been produced by applying the vizdataquality package to investigate data quality of a dataset about fines that were issued for all of the car parks in a city, during a three month period. The data is (c) Leeds City Council, 2019, https://datamillnorth.org/dataset/v8ggw/off-street-parking-fines, and is licensed under the terms of the Open Government Licence (https://www.nationalarchives.gov.uk/doc/open-government-licence/version/2/).
+
+The first five workflow steps investigate data quality and clean it in a structured manner. The 6th step profiled the cleaned data.
+
+\section{Step 1: Look at your data (is anything obviously wrong?)}
+
+Each row of the data file ends with a comma, which produces an empty, unnamed column. That column has been removed in this step.
+
+\section{Step 2: Watch out for special values}
+
+Sometimes datasets use special values (e.g., large integer values like 999, or old dates like 1 January 1800) to indicate values that are missing, invalid, etc. No such special values were found in this dataset.
+
+\section{Step 3: Is any data missing?}
+
+None of the variables are missing any values.
+
+\section{Step 4: Check each variable}
+
+A plot of each variable's value lengths revealed issues with LOCATION and CONTRAVENTION. Detailed investigation showed that some LOCATION and CONTRAVENTION values contain trailing spaces, so the data has been cleaned by stripping those trailing spaces.
+
+The two date variables (ISSUED and Last Pay Date) only contain year, month and day (not time).
+
+The PCN (the ID for a penalty charge notice) is not unique. Each PCN appears 1 to 5 times.
+
+There are two values of FINE, but an unexpected number of different Balance and Total Paid values.
+
+\section{Step 5: Check combinations of variables}
+
+It would be logical to expect FINE - Total Paid = Balance. However, that is only true for 785 (11%) of the records. For thousands of other records the difference is the whole value of the FINE (50 or 75 pounds) or half its value (25 or 35 pounds). Other records have unusual differences (e.g., 49.06).
+
+\section{Step 6: Profile the cleaned data}
+
+Table~\ref{tab:1} shows the number of rows and columns in the dataset.
+
+\begin{table}[h!]
+\caption{The size of the dataset.}
+\label{tab:1}
+\begin{tabular}{lrr}
+\toprule
+Dataset & Number of rows & Number of columns \\
+\midrule
+../examples/Quarter 4 201819.csv & 7108 & 8 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Table~\ref{tab:2} shows information about each variable.
+
+\begin{table}[h!]
+\caption{Data types and example values.}
+\label{tab:2}
+\begin{tabular}{lll}
+\toprule
+Variable & Data type & Example value \\
+\midrule
+PCN & object & LS04961495 \\
+ISSUED & datetime64[ns] & 2019-02-14 00:00:00 \\
+LOCATION & object & WOODHOUSE LANE  CP - CITY \\
+CONTRAVENTION & object & 83 WITHOUT DISPLAYING A VALID TICKET \\
+FINE & int64 & 50 \\
+Last Pay Date & datetime64[ns] & 2019-03-28 00:00:00 \\
+Total Paid & float64 & 25.000000 \\
+Balance & float64 & 0.000000 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Figure~\ref{fig:1} shows that every variable is complete, but none are unique for every record.
+
+\begin{figure}[h!]
+  \includegraphics[width=\linewidth]{numvals_uniquevals.jpg}
+  \caption{The number of values and unique values in each variable.}
+  \label{fig:1}
+\end{figure}
+
+Figure~\ref{fig:2} shows that 1430 PCNs occur once, and the other 2511 PCNs each occur 2 - 5 times.
+
+\begin{figure}[h!]
+  \includegraphics[width=\linewidth]{value_counts PCN.jpg}
+  \caption{Number of occurrences of PCNs.}
+  \label{fig:2}
+\end{figure}
+
+Figure~\ref{fig:3} shows that some car parks have only one or two records, whereas one car park has more than 1000.
+
+\begin{figure}[h!]
+  \includegraphics[width=\linewidth]{value_counts LOCATION.jpg}
+  \caption{Number of records for each LOCATION.}
+  \label{fig:3}
+\end{figure}
+
+Figure~\ref{fig:4} shows that Contravention 83 occurs in more records than all of the other contraventions put together, some of which only occur once or twice.
+
+\begin{figure}[h!]
+  \includegraphics[width=\linewidth]{value_counts CONTRAVENTION.jpg}
+  \caption{Number of records for each CONTRAVENTION.}
+  \label{fig:4}
+\end{figure}
+
+Figure~\ref{fig:5} shows that most issued dates are from the past two years, but a few are from 10 years ago.
+
+\begin{figure}[h!]
+  \includegraphics[width=\linewidth]{date_distribution_1.jpg}
+  \caption{Distribution of ISSUED dates.}
+  \label{fig:5}
+\end{figure}
+
+Figure~\ref{fig:6} shows that, as expected, all of the Last Pay Dates are in Jan - Mar 2019.
+
+\begin{figure}[h!]
+  \includegraphics[width=\linewidth]{date_distribution_2.jpg}
+  \caption{Distribution of Last Pay Date dates.}
+  \label{fig:6}
+\end{figure}
+
+Figure~\ref{fig:7} shows that FINE is 50 or 70 pounds, but there are many unexpected values of Total Paid and Balance.
+
+\begin{figure}[h!]
+  \includegraphics[width=\linewidth]{value_counts balance_fine_totalpaid.jpg}
+  \caption{Value counts for the fine, total paid and balance.}
+  \label{fig:7}
+\end{figure}
+
+Table~\ref{tab:3} shows that only for fines paid during the normal time period (no discount or penalty) is the following rule true: Balance = FINE - Total Paid.
+
+\begin{table}[h!]
+\caption{Relationship between Balance, FINE, Total Paid and the difference between the ISSUED and Last Pay Date.}
+\label{tab:3}
+\begin{tabular}{llrrrr}
+\toprule
+FINE, Total Paid & Balance & Balance & 0-14 days & 15-56 days & 57-70 days & 71+ days \\
+\midrule
+Consistent & Negative & 0 & 0 & 0 & 0 \\
+Consistent & Zero & 0 & 892 & 0 & 0 \\
+Consistent & Positive & 0 & 6 & 0 & 0 \\
+Inconsistent & Negative & 0 & 0 & 1 & 6 \\
+Inconsistent & Zero & 4753 & 0 & 254 & 693 \\
+Inconsistent & Positive & 328 & 0 & 62 & 113 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Acknowledgements}
+
+This report was created using the vizdataquality Python package.
+
+\end{document}

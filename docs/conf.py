@@ -16,6 +16,7 @@
 
 
 # -- Project information -----------------------------------------------------
+import pydata_sphinx_theme
 
 project = 'vizdataquality'
 copyright = '2024, Roy Ruddle'
@@ -54,3 +55,18 @@ html_theme = 'pydata_sphinx_theme'
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
+
+html_theme_options = {
+    "logo": {
+        "text": "vizdataquality",
+    },
+    "icon_links": [
+        {
+            "name": "GitHub",
+            "url": "https://github.com/royruddle/vizdataquality",
+            "icon": "fa-brands fa-github",
+            "type": "fontawesome",
+        }]
+}
+
+release = pydata_sphinx_theme.__version__

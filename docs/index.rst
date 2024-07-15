@@ -10,6 +10,8 @@ Welcome to vizdataquality's documentation
    :maxdepth: 1
 
    api_reference
+   tutorials
+   examples
 
 .. include:: ../README.md
    :parser: myst_parser.sphinx_

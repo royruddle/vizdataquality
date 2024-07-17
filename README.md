@@ -34,7 +34,7 @@ python -m jupyter notebook notebooks
 ```
 
 ## Development
-- Documentation is build on readthedocs.com from main branch
+- Documentation is built on readthedocs.com from main branch
 - PyPi pulls on creating a release on project repository on GitHub.
 
 ## Notice

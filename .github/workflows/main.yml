@@ -36,11 +36,11 @@ jobs:
         python -m pytest
 
     - name: Run notebooks [Linux]
-      if: runner.os == 'Linux' && matrix.python-version == '3.9'
+      if: runner.os == 'Linux' && matrix.python-version == '3.12'
       run: |
         cd tests && bash check_notebooks.sh
 
     - name: Build docs [Linux]
-      if: runner.os == 'Linux'
+      if: runner.os == 'Linux' && matrix.python-version == '3.12'
       run: |
         sphinx-build docs docs/build -b html

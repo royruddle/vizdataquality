@@ -42,5 +42,7 @@ python -m jupyter notebook notebooks
 ## Notice
 The vizdataquality software is released under the Apache Licence, version 2.0. See [LICENCE](./LICENCE) for details.
 
+The file missing_data_functions.py contains some code that has been derived from [setvis](https://pypi.org/project/setvis/), which uses the same licence as vizdataquality. The same person leads the development of both packages. 
+
 ## Acknowledgements
 The development of the vizdataquality software was supported by funding from the Engineering and Physical Sciences Research Council (EP/N013980/1; EP/R511717/1) and the Alan Turing Institute.

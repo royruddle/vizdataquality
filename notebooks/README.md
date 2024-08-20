@@ -1,5 +1,5 @@
 # Notebooks
-The vizdataquality package includes four types of notebook.
+The vizdataquality package includes five types of notebook.
 
 ## Calculations
 - [Calculate a set of data quality attributes and output them to a file](https://github.com/royruddle/vizdataquality/blob/main/notebooks/Simple%20example.ipynb)
@@ -23,3 +23,9 @@ Others create visualizations directly from a dataframe containing the dataset.
 
 ## Workflow
 - Apply a [six-step workflow](https://github.com/royruddle/vizdataquality/blob/main/notebooks/Workflow%20(parking%20fines).ipynb) to investigate data quality and profile an open parking fines dataset
+
+## Missing data structures
+- Investigating a simple [monotone pattern of missing values](https://github.com/royruddle/vizdataquality/blob/main/notebooks/missing%20data%20structure%201.ipynb)
+- Investigating [interwoven patterns of missing values](https://github.com/royruddle/vizdataquality/blob/main/notebooks/missing%20data%20structure%202.ipynb)
+- For large datasets, [reading data in chunks from a file](https://github.com/royruddle/vizdataquality/blob/main/notebooks/missing%20data%20from%20file.ipynb)
+- For saving your analysis, [importing and exporting](https://github.com/royruddle/vizdataquality/blob/main/notebooks/missing%20data%20import%20and%20export.ipynb)

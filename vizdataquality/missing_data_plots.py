@@ -594,7 +594,7 @@ def plot_purity_heatmap(df_patterns, threshold=0.0, row_col_order=None, ax_input
                     if abs(vv - int(vv)) <= 0:
                         ax.text(j, i, int(vv), ha="center", va="center", color="w")       
                     else:
-                        ax.text(j, i, '{:.2f}'.format(vv), ha="center", va="center", color="w")       
+                        ax.text(j, i, '{:.2f}'.format(min(vv, 0.99)), ha="center", va="center", color="w")       
         
     if ax_input is None:
         vdqp._draw_fig(filename, overwrite)

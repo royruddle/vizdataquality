@@ -82,7 +82,7 @@ def _get_missiness_pattern_two_columns(intersection_columns, intersection_cardin
         structs = [patterns]
         
     # min, mean or overall
-    PURITY_METHOD = 'min'
+    PURITY_METHOD = 'overall'
         
     for ss in structs:
         purity = None

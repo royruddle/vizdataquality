@@ -641,9 +641,9 @@ class Explanation_Graph:
         num_completely = df_num_explained.min(axis=1).sum()
         num_partly = df_num_explained.max(axis=1).sum() - num_completely
         num_not = df_total_missing.max(axis=1).sum() - num_completely - num_partly
-        data['Rows'] = [num_completely, num_partly, num_not]
+        data['Records'] = [num_completely, num_partly, num_not]
         
-        cols = ['Category', 'Combinations', 'Rows', 'Variables', 'Values']
+        cols = ['Category', 'Combinations', 'Records', 'Variables', 'Values']
         
         return pd.DataFrame.from_dict(data)[cols].set_index('Category')
 

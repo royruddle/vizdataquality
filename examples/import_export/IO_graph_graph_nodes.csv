@@ -1,0 +1,3 @@
+,_id,_attributes,_caption,_description,_columns,_intersections,_children,_calculated_width,_width,_x,_y
+0,0,,Root,,,,[1],False,0,,
+1,1,,Monotone,"Variables M1, M2, M3 and M4 have a monotone pattern of missingness.","['M3', 'M5', 'M4', 'M2']","[0, 1, 2, 3]",[],False,0,,

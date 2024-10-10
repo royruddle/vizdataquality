@@ -28,3 +28,7 @@ This example uses:
 - Line plots to visualize the year, month and day of the week distributions of ISSUED and Last Pay Date.
 - Lollipop plots to visualize value counts for FINE, Balance and Total Paid.
 - A table summarising the relationship between FINE, Balance and Total Paid for different time periods.
+##Import/export
+The data files that are exported and imported by the [importing and exporting](https://github.com/royruddle/vizdataquality/blob/main/notebooks/missing%20data%20import%20and%20export.ipynb) missing data example.
+## Import/export
+The data files that are used by the [importing and exporting](https://github.com/royruddle/vizdataquality/blob/main/notebooks/missing%20data%20import%20and%20export.ipynb) missing data example.

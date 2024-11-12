@@ -44,6 +44,8 @@ def _get_missiness_pattern_two_columns(intersection_columns, intersection_cardin
         One row for each type of pattern/pair of columns, storing ['Pattern', 'Purity', 'Column1', 'Column2'].
 
     """
+    # See versions in get_missiness_pattern()
+    VERSION = 2
     # Storing intersections for each pair of columns could require a lot of memory
     store_intersections = False
     
@@ -164,7 +166,7 @@ def _get_missiness_pattern_two_columns(intersection_columns, intersection_cardin
                     col1 = column2
                     col2 = column1
                     
-                if store_intersections:
+                if store_intersections and VERSION != 2:
                     data.append([ss, purity, col1, col2, ' '.join(map(str, df_check2.index.tolist()))])
                 else:
                     data.append([ss, purity, col1, col2])
@@ -173,20 +175,23 @@ def _get_missiness_pattern_two_columns(intersection_columns, intersection_cardin
             # purity was None
             pass
 
-    if store_intersections:
-        dfcols = ['Pattern', 'Purity', 'Column1', 'Column2', 'Intersection_list']
+    if VERSION == 2:
+        return data
     else:
-        dfcols = ['Pattern', 'Purity', 'Column1', 'Column2']
+        if store_intersections:
+            dfcols = ['Pattern', 'Purity', 'Column1', 'Column2', 'Intersection_list']
+        else:
+            dfcols = ['Pattern', 'Purity', 'Column1', 'Column2']
+            
+        if len(data) > 0:
+            df_patterns = pd.DataFrame(columns=dfcols, data=data)
+        else:
+            df_patterns = pd.DataFrame(columns=dfcols)
         
-    if len(data) > 0:
-        df_patterns = pd.DataFrame(columns=dfcols, data=data)
-    else:
-        df_patterns = pd.DataFrame(columns=dfcols)
-    
-    return df_patterns
+        return df_patterns
 
 
-def get_missiness_pattern(num_missing, intersection_columns, intersection_cardinality, patterns=None, threshold=0.0):
+def get_missiness_pattern(num_missing, intersection_columns, intersection_cardinality, patterns=None, threshold=0.0, verbose=False):
     """
     Determine which patterns of missing data occur and their purity, for columns that have missing values.
 
@@ -204,6 +209,8 @@ def get_missiness_pattern(num_missing, intersection_columns, intersection_cardin
         The patterns to look for. The default is None (look for all the mdu.PATTERNS).
     threshold : float, optional
         A purity threshold, below which a pattern will not be returned.The default is 0.0.
+    verbose : boolean
+        True (print information about the number of pairs that have been processed) or False (silent). The default is False.
 
     Returns
     -------
@@ -212,25 +219,59 @@ def get_missiness_pattern(num_missing, intersection_columns, intersection_cardin
 
     """
     df_patterns = None
+    npair = 0
+    # Verions 2 and 3 are similar speed, and faster than Version 1
+    VERSION = 2
+    # VERSION 2
+    pairslist = []
+    # VERSION 3
+    pairsdict = {}
+    count = 0
+    # VERSION 4
+    dfs = []
     
     # Loop over ever pair of columns
     for l1 in range(intersection_columns.shape[1]-1):
+        
+        if verbose:
+            print('missing_data_functions.py', 'get_missiness_pattern()', 'processing pair', npair+1, 'of',
+                  int(intersection_columns.shape[1] * (intersection_columns.shape[1] - 1) / 2))
+            
         col1 = intersection_columns.columns[l1]
         
-        if num_missing.loc[col1] > 0:
+        if num_missing.loc[col1] <= 0:
+            npair += (intersection_columns.shape[1] - (l1+1))
+        else:
             # At least one value is missing from this column
             for l2 in range(l1+1, intersection_columns.shape[1]):
+                npair += 1
                 col2 = intersection_columns.columns[l2]
         
                 if num_missing.loc[col2] > 0:
                     # At least one value is missing from this column
-                    df_column_pair_pattern = _get_missiness_pattern_two_columns(intersection_columns[[col1, col2]], intersection_cardinality, patterns, threshold)
-                    
-                    try:
-                        df_patterns = pd.concat([df_patterns, df_column_pair_pattern], ignore_index=True)
-                    except:
-                        pass
-                        df_patterns = df_column_pair_pattern
+                    if VERSION == 1:
+                        # Original method
+                        df_column_pair_pattern = _get_missiness_pattern_two_columns(intersection_columns[[col1, col2]], intersection_cardinality, patterns, threshold)
+                        
+                        try:
+                            df_patterns = pd.concat([df_patterns, df_column_pair_pattern], ignore_index=True)
+                        except:
+                            pass
+                            df_patterns = df_column_pair_pattern
+                    elif VERSION == 2:
+                        pairslist = pairslist + _get_missiness_pattern_two_columns(intersection_columns[[col1, col2]], intersection_cardinality, patterns, threshold)
+                    elif VERSION == 3:
+                        df_column_pair_pattern = _get_missiness_pattern_two_columns(intersection_columns[[col1, col2]], intersection_cardinality, patterns, threshold)
+                        # Add the patterns to the pairs dictionary
+                        for row in df_column_pair_pattern.itertuples(index=False, name=None):
+                            pairsdict[count] = list(row)
+                            count += 1
+                        
+    if VERSION == 2 and len(pairslist) > 0:
+        df_patterns = pd.DataFrame(pairslist, columns=['Pattern', 'Purity', 'Column1', 'Column2'])
+    if VERSION == 3 and len(pairsdict) > 0:
+        df_patterns = pd.DataFrame.from_dict(pairsdict, orient='index')
+        df_patterns.columns = ['Pattern', 'Purity', 'Column1', 'Column2']
                 
     return df_patterns
 
@@ -313,17 +354,35 @@ def _get_intersections(columns, dict_displayedMissingCombs, record_intersection_
         The 'intersection_id' (Index) of each record.
 
     """
-    # Create a dataframe with the same columns as the original dataset
-    intersection_id_to_columns = pd.DataFrame(columns=columns)
-    
-    # Add each intersection as a row, with the ID as the location
-    for key, value in dict_displayedMissingCombs.items():
-        intersection_id_to_columns.loc[value] = list(key)
-    
-    # Replace t/f with True/False (column is missing/present in that intersection)
-    intersection_id_to_columns.replace({'f': False, 't': True}, inplace=True)
+    if False:
+        # Create a dataframe with the same columns as the original dataset
+        intersection_id_to_columns = pd.DataFrame(columns=columns)
+        
+        # Add each intersection as a row, with the ID as the location
+        for key, value in dict_displayedMissingCombs.items():
+            intersection_id_to_columns.loc[value] = list(key)
+
+        # Replace t/f with True/False (column is missing/present in that intersection)
+        intersection_id_to_columns.replace({'f': False, 't': True}, inplace=True)
+    else:
+        # 20x faster, by pre-allocating the dataframe mamory
+        # Create array to hold the data
+        array = np.empty((len(dict_displayedMissingCombs), len(columns)))
+        
+        # Add each intersection as a row, with the ID as the location
+        for key, value in dict_displayedMissingCombs.items():
+            for l2 in range(len(key)):
+                array[value][l2] = 0 if key[l2] == 'f' else 1
+        
+        # Create the dataframe
+        intersection_id_to_columns = pd.DataFrame(array, columns=columns)
+
+        # Replace t/f with True/False (column is missing/present in that intersection)
+        intersection_id_to_columns.replace({0: False, 1: True}, inplace=True)
+        
+    # Rename the axis
     intersection_id_to_columns.rename_axis('intersection_id', inplace=True)
-    
+
     intersection_id_to_records = pd.Series(record_intersection_id).rename_axis("_record_id").reset_index().set_index(0).rename_axis('intersection_id')
 
     return intersection_id_to_columns, intersection_id_to_records
@@ -403,7 +462,8 @@ def get_intersections_from_file(dataset_filename, verbose=False, **kwargs):
             if record_intersection_id is None:
                 # The first chunk. Array size is nrows (if that is specified) or chunksize
                 size = chunksize if nrows is None else nrows
-                record_intersection_id = np.empty(size, np.int8)
+                # The intersection ID of each record (uintp used to maximise the number of intersections that can be handled on a given platform)
+                record_intersection_id = np.empty(size, np.uintp)
                 columns = list(chunk.columns)
             elif nrows is None and record_intersection_id.size < row_num + chunksize:
                 # Subsequent chunks. Increase array so there's space for each record in this chunk
@@ -532,9 +592,8 @@ def _compute_missingness_from_dataframe(df):
     """
     # Create empty dictionary to store the combinations of missing values
     dict_displayedMissingCombs = {}
-    # The intersection ID of each record (NumPy array uses less memory than Python list)
-    #record_intersection_id = [-1] * len(df)
-    record_intersection_id = np.empty(len(df), np.int8)
+    # The intersection ID of each record (uintp used to maximise the number of intersections that can be handled on a given platform)
+    record_intersection_id = np.empty(len(df), np.uintp)
     num_missing = _compute_missingness(df, dict_displayedMissingCombs, record_intersection_id)
     
     return df.columns, num_missing, dict_displayedMissingCombs, record_intersection_id

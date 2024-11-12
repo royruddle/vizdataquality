@@ -725,8 +725,8 @@ def plot_explanation_graph_diagram(graph, ax_input=None, node_positions={}, vert
         textkw['bbox']['facecolor'] = 'w'
 
     # Set default text justification if none is defined
-    if vert and 'horizontalalignment' not in textkw:
-        textkw['horizontalalignment'] = 'center'
+    if 'horizontalalignment' not in textkw:
+        textkw['horizontalalignment'] = 'center' if vert else 'left'
     #
     # Plot the graph
     #
@@ -742,7 +742,7 @@ def plot_explanation_graph_diagram(graph, ax_input=None, node_positions={}, vert
     graph.calc_layout()
     
     for node_id in range(graph.num_nodes()):
-        px, py, text, attribs = graph.get_coords(node_id, vert)
+        px, py, text, node_attr = graph.get_coords(node_id, vert)
         
         # User-defined position
         try:
@@ -773,12 +773,13 @@ def plot_explanation_graph_diagram(graph, ax_input=None, node_positions={}, vert
             pass
             
         # Apply this node's attributes
-        if attribs is None:
-            attribs = {}
+        # *** START EDIT
+        attribs = {} if node_attr is None else node_attr.copy()
+        # *** END EDIT
             
         for key, value in textkw.items():
             if key not in attribs:
-                # This attribute is not specified for the node to set it to the default
+                # This attribute is not specified for the node so set it to the default
                 attribs[key] = value
             elif key == 'bbox':
                 # Both the node and the default have bbox attributes, so check them individually
@@ -790,11 +791,18 @@ def plot_explanation_graph_diagram(graph, ax_input=None, node_positions={}, vert
         aa = ax.annotate(text, xy, **attribs)
             
         ann.append(aa)
-
+        
     # Set the axis limits
-    ax.set_ylim(minmax[1][0] - 0.25, minmax[1][1] + 0.25)
-    ax.set_xlim(minmax[0][0] - 0.6, minmax[0][1] + 0.6)
-    
+    if vert:
+        margin = (0.6, 0.25)
+        ax.set_xlim(minmax[0][0] - margin[0], minmax[0][1] + margin[0])
+        ax.set_ylim(minmax[1][0] - margin[1], minmax[1][1] + margin[1])
+    else:
+        xmargin = [0.25, 0.75]
+        ymargin = 0.6
+        ax.set_xlim(minmax[0][0] - xmargin[0], minmax[0][1] + xmargin[1])
+        ax.set_ylim(minmax[1][0] - ymargin, minmax[1][1] + ymargin)
+
     # Calculate the coordinates of each annotation bbox
     # See https://stackoverflow.com/questions/41267733/getting-the-coordinates-of-a-matplotlib-annotation-label-in-figure-coordinates
     fig.canvas.draw()

@@ -55,7 +55,16 @@ class Explanation_Graph:
             self._criteria = criteria
             # Dataframe with one row per intersection (the index) a column for each variable.
             # Values are 0 (column is not part of the intersection), -1 (it is but not yet in the graph) or 1 (in the graph; i.e., 'explained')
-            self._intersection_id_to_columns = intersection_id_to_columns.copy().astype('int64').replace(1, -1)
+            # *** START EDIT
+            #self._intersection_id_to_columns = intersection_id_to_columns.copy().astype('int64').replace(1, -1)
+            self._intersection_id_to_columns = intersection_id_to_columns.replace({False: 0, True:-1})
+            # Dictionary that flags whether each column is fully explained (for efficiency when adding nodes)
+            self._columns_explained = {}
+            
+            for col in self._intersection_id_to_columns:
+                self._columns_explained[col] = False
+            # *** END EDIT
+            
             # The cardinality of each intersection. Index is the 'intersection_id'.
             self._intersection_cardinality = intersection_cardinality.copy()
             # Set the number of nodes to None. The root will become node zero.
@@ -68,7 +77,14 @@ class Explanation_Graph:
             self._criteria = import_attributes.loc['_criteria']
             self._intersection_id_to_columns = intersection_id_to_columns
             self._intersection_cardinality = intersection_cardinality
-
+            # *** START EDIT
+            # Dictionary that flags whether each column is fully explained (for efficiency when adding nodes)
+            self._columns_explained = {}
+            
+            for col in self._intersection_id_to_columns:
+                self._columns_explained[col] = False if len(self._intersection_id_to_columns[self._intersection_id_to_columns[col] == -1]) > 0 else True
+            # *** END EDIT
+            
             Explanation_Node.num_nodes = None
             
             for l1 in range(len(import_nodes)):
@@ -415,7 +431,7 @@ class Explanation_Graph:
                 
             py = max_level - nn._x
         else:
-            px = nn._x
+            px = nn._x - 1
             py = nn._y - 1
 
         return px, py, text, self._nodelist[node_id].get_attributes()
@@ -711,7 +727,7 @@ class Explanation_Graph:
                 for child in nn._children:
                     if visited[child._id] == False:
                             queue.append(child._id)
-
+        
         if Explanation_Graph.DEBUG:
             tmp = []
             if len(parents)>0:
@@ -732,15 +748,37 @@ class Explanation_Graph:
         # Update the columns and intersections that are contained in the graph. Warnings are printed if:
         #  - Any column is not part of every intersection (that will always occur if an explanation involves 2+ intersections)
         #  - Any column/intersection pair is already in the Explanation_Graph (that would only occur if a user adds a second explanation for a given intersectin, involving some of the same columns as before)
+        
         warning = [False, False]
-        for intersection in new_explanation.get_intersections():
+        # *** START EDIT
+        #for intersection in new_explanation.get_intersections():
+        #    
+        #    for col in new_explanation.get_columns():
+        #        
+        #        if self._intersection_id_to_columns.iloc[intersection][col] == -1:
+        #            self._intersection_id_to_columns.iloc[intersection][col] = 1
+        #        else:
+        #            warning[self._intersection_id_to_columns.iloc[intersection][col]] = True
+        
+        # Loop over the columns that are part of the new explanation
+        for col in new_explanation.get_columns():
             
-            for col in new_explanation.get_columns():
-                
-                if self._intersection_id_to_columns.iloc[intersection][col] == -1:
-                    self._intersection_id_to_columns.iloc[intersection][col] = 1
-                else:
-                    warning[self._intersection_id_to_columns.iloc[intersection][col]] = True
+            if Explanation_Graph.DEBUG:
+                # Get the unique values in this column
+                vc = self._intersection_id_to_columns.iloc[list(new_explanation.get_intersections())][col].unique()
+                # Set the warning flags if any values in the column are 0 or 1
+                for val in [0, 1]:
+                    if val in vc:
+                        warning[val] = True
+            
+            if not self._columns_explained[col]:
+                # Get the indices of the records that have a value of -1 in this column
+                ind = list(new_explanation.get_intersections().intersection(self._intersection_id_to_columns[self._intersection_id_to_columns[col] == -1].index))
+                # Set the -1 values in the column  equal to 1
+                self._intersection_id_to_columns.loc[ind, col] = 1
+                # Set flag to indicate whether or not the column is fully explained                
+                self._columns_explained[col] = False if len(self._intersection_id_to_columns[self._intersection_id_to_columns[col] == -1]) > 0 else True
+        # *** END EDIT
 
         # Add the new node to the list
         self._nodelist.append(new_explanation)
@@ -750,6 +788,7 @@ class Explanation_Graph:
                 print('** WARNING ** Explanation_Graph.add_node(). Some columns are not part of every intersection.')
             elif warning[1]:
                 print('** WARNING ** Explanation_Graph.add_node(). Some columns have already been added to the Explanation_Graph for a given intersection.')
+
 
         
     def recalculate(self, criteria=CHECK_COLUMNS | CHECK_INTERSECTIONS):

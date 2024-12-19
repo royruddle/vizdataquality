@@ -664,131 +664,154 @@ class Explanation_Graph:
         return pd.DataFrame.from_dict(data)[cols].set_index('Category')
 
         
-    def add_node(self, new_explanation):
+    def add_node(self, new_explanations, ignore=None):
         """
-        Add a new explanation to the graph, connected to the appropriate parents.
+        Add a new explanation(s) to the graph, connected to the appropriate parents.
+        
+        If a list of new explanations is provided then they are added independently, so they are siblings/cousins of each other.
 
         Parameters
         ----------
-        new_explanation : Explanation_Node
-            An explanation.
+        new_explanation : list or Explanation_Node
+            An explanation or a list of explanations.
+        ignore : list or int, optional
+            A node ID or list of IDs to ignore so they do not become the new explanation's parent. The default is None.
 
         Returns
         -------
         None.
 
         """
+        # Make the new_explanations a list
+        newexp = new_explanations if isinstance(new_explanations, list) else [new_explanations]
+        parentlists = []
+        
+        for l1 in range(len(newexp)):
+            parentlists.append(set())
+
         if Explanation_Graph.DEBUG:
-            print('Explanation_Graph.add_node() ID =', new_explanation._id)
+            print('Explanation_Graph.add_node() IDs =', [nn._id for nn in newexp])
             
-        # Breadth-first search to get a list of the graph's nodes in ID order
-        nodes = self.get_node_list()
-        # Create a list with one position for each node
-        visited = [False] * len(nodes)
-        # Start at node zero (the root)
-        queue = [0]
-        visited[0] = True
-        parents = []
-        
-        while queue:
-            # Get the ID of the next node in the queue
-            nid = queue.pop(0)
-            # Get the Explanation_Node instance for that ID
-            nn = nodes[nid]
-        	
-            if new_explanation.is_intersect(nn, self._criteria):
-                # Node nn is a parent of new_explanation because they have columns/intersections in common
-                parents.append(nn)
-                # Get a list of this node's descendents (by getting a list that includes this node and then setting its entry to None)
-                descendents = [None] * len(nodes)
-                nn._add_node_and_descendents_to_list(descendents)
-                descendents[nid] = None
-                
-                for n2 in descendents:
-                    if n2 is not None:
-                        nid2 = n2._id
-
-                        # Remove descendent from parents (if it is in it)
-                        try:
-                            parents.remove(nid2)
-                        except:
-                            pass
-
-                        # Remove descendent from queue (if it is in it)
-                        try:
-                            queue.remove(nid2)
-                        except:
-                            pass
-
-                        # Add descendent to visited (so it will not be visited)
-                        visited[nid2] = True
-            else:
-                # Node nn is not a parent. Add its children to the queue if they are not in the visited list
-                for child in nn._children:
-                    if visited[child._id] == False:
-                            queue.append(child._id)
-        
-        if Explanation_Graph.DEBUG:
-            tmp = []
-            if len(parents)>0:
-                for s in parents:
-                    tmp.append(s._id)
-
-            print('Explanation_Graph.add_node() ID =', new_explanation._id, ' PARENTS are ', tmp)
-            new_explanation.print()
-
-        if len(parents) == 0:
-            # Add the new node to the root node
-            self._root.add_child(new_explanation)
+        if True:
+            # Depth-first search.
+            for l1 in range(len(newexp)):
+                visited = set(newexp) if isinstance(new_explanations, list) else set()
+                ign = [] if ignore is None else ignore if isinstance(ignore, list) else [ignore]
+                found_parent = self._root._dfs(newexp[l1], self._criteria, visited, parentlists[l1], ign)
         else:
-            # Make the new node a child of the nodes calculated from columns/intersections in common
-            for exp in parents:
-                exp.add_child(new_explanation)
+            # Breadth-first search to get a list of the graph's nodes in ID order.
+            # NB: This code only adds a node for the first new_explanation
+            nodes = self.get_node_list()
+            # Create a list with one position for each node
+            visited = [False] * len(nodes)
+            # Start at node zero (the root)
+            queue = [0]
+            visited[0] = True
+            parents = []
+            parentlists = [parents]
+            
+            while queue:
+                # Get the ID of the next node in the queue
+                nid = queue.pop(0)
+                # Get the Explanation_Node instance for that ID
+                nn = nodes[nid]
+            	
+                if newexp[0].is_intersect(nn, self._criteria):
+                    # Node nn is a parent of new_explanation because they have columns/intersections in common
+                    parents.append(nn)
+                    # Get a list of this node's descendents (by getting a list that includes this node and then setting its entry to None)
+                    descendents = [None] * len(nodes)
+                    nn._add_node_and_descendents_to_list(descendents)
+                    descendents[nid] = None
+                    
+                    for n2 in descendents:
+                        if n2 is not None:
+                            nid2 = n2._id
+    
+                            # Remove descendent from parents (if it is in it)
+                            try:
+                                parents.remove(nid2)
+                            except:
+                                pass
+    
+                            # Remove descendent from queue (if it is in it)
+                            try:
+                                queue.remove(nid2)
+                            except:
+                                pass
+    
+                            # Add descendent to visited (so it will not be visited)
+                            visited[nid2] = True
+                else:
+                    # Node nn is not a parent. Add its children to the queue if they are not in the visited list
+                    for child in nn._children:
+                        if visited[child._id] == False:
+                                queue.append(child._id)
+        
+        for l1 in range(len(newexp)):
+            new_explanation = newexp[l1]
+            parents = parentlists[l1]
                 
-        # Update the columns and intersections that are contained in the graph. Warnings are printed if:
-        #  - Any column is not part of every intersection (that will always occur if an explanation involves 2+ intersections)
-        #  - Any column/intersection pair is already in the Explanation_Graph (that would only occur if a user adds a second explanation for a given intersectin, involving some of the same columns as before)
-        
-        warning = [False, False]
-        # *** START EDIT
-        #for intersection in new_explanation.get_intersections():
-        #    
-        #    for col in new_explanation.get_columns():
-        #        
-        #        if self._intersection_id_to_columns.iloc[intersection][col] == -1:
-        #            self._intersection_id_to_columns.iloc[intersection][col] = 1
-        #        else:
-        #            warning[self._intersection_id_to_columns.iloc[intersection][col]] = True
-        
-        # Loop over the columns that are part of the new explanation
-        for col in new_explanation.get_columns():
+            if Explanation_Graph.DEBUG:
+                tmp = []
+                if len(parents)>0:
+                    for s in parents:
+                        tmp.append(s._id)
+    
+                print('Explanation_Graph.add_node() ID =', new_explanation._id, ' PARENTS are ', tmp)
+                new_explanation.print()
+    
+            if len(parents) == 0:
+                # Add the new node to the root node
+                self._root.add_child(new_explanation)
+            else:
+                # Make the new node a child of the nodes calculated from columns/intersections in common
+                for exp in parents:
+                    exp.add_child(new_explanation)
+                    
+            # Update the columns and intersections that are contained in the graph. Warnings are printed if:
+            #  - Any column is not part of every intersection (that will always occur if an explanation involves 2+ intersections)
+            #  - Any column/intersection pair is already in the Explanation_Graph (that would only occur if a user adds a second explanation for a given intersectin, involving some of the same columns as before)
+            
+            warning = [False, False]
+            # *** START EDIT
+            #for intersection in new_explanation.get_intersections():
+            #    
+            #    for col in new_explanation.get_columns():
+            #        
+            #        if self._intersection_id_to_columns.iloc[intersection][col] == -1:
+            #            self._intersection_id_to_columns.iloc[intersection][col] = 1
+            #        else:
+            #            warning[self._intersection_id_to_columns.iloc[intersection][col]] = True
+            
+            # Loop over the columns that are part of the new explanation
+            for col in new_explanation.get_columns():
+                
+                if Explanation_Graph.DEBUG:
+                    # Get the unique values in this column
+                    vc = self._intersection_id_to_columns.iloc[list(new_explanation.get_intersections())][col].unique()
+                    # Set the warning flags if any values in the column are 0 or 1
+                    for val in [0, 1]:
+                        if val in vc:
+                            warning[val] = True
+                
+                if not self._columns_explained[col]:
+                    # Get the indices of the records that have a value of -1 in this column
+                    ind = list(new_explanation.get_intersections().intersection(self._intersection_id_to_columns[self._intersection_id_to_columns[col] == -1].index))
+                    # Set the -1 values in the column  equal to 1
+                    self._intersection_id_to_columns.loc[ind, col] = 1
+                    # Set flag to indicate whether or not the column is fully explained                
+                    self._columns_explained[col] = False if len(self._intersection_id_to_columns[self._intersection_id_to_columns[col] == -1]) > 0 else True
+            # *** END EDIT
+    
+            # Add the new node to the list
+            self._nodelist.append(new_explanation)
             
             if Explanation_Graph.DEBUG:
-                # Get the unique values in this column
-                vc = self._intersection_id_to_columns.iloc[list(new_explanation.get_intersections())][col].unique()
-                # Set the warning flags if any values in the column are 0 or 1
-                for val in [0, 1]:
-                    if val in vc:
-                        warning[val] = True
-            
-            if not self._columns_explained[col]:
-                # Get the indices of the records that have a value of -1 in this column
-                ind = list(new_explanation.get_intersections().intersection(self._intersection_id_to_columns[self._intersection_id_to_columns[col] == -1].index))
-                # Set the -1 values in the column  equal to 1
-                self._intersection_id_to_columns.loc[ind, col] = 1
-                # Set flag to indicate whether or not the column is fully explained                
-                self._columns_explained[col] = False if len(self._intersection_id_to_columns[self._intersection_id_to_columns[col] == -1]) > 0 else True
-        # *** END EDIT
-
-        # Add the new node to the list
-        self._nodelist.append(new_explanation)
-        
-        if Explanation_Graph.DEBUG:
-            if warning[0]:
-                print('** WARNING ** Explanation_Graph.add_node(). Some columns are not part of every intersection.')
-            elif warning[1]:
-                print('** WARNING ** Explanation_Graph.add_node(). Some columns have already been added to the Explanation_Graph for a given intersection.')
-
+                if warning[0]:
+                    print('** WARNING ** Explanation_Graph.add_node(). Some columns are not part of every intersection.')
+                elif warning[1]:
+                    print('** WARNING ** Explanation_Graph.add_node(). Some columns have already been added to the Explanation_Graph for a given intersection.')
 
         
     def recalculate(self, criteria=CHECK_COLUMNS | CHECK_INTERSECTIONS):
@@ -1016,6 +1039,53 @@ class Explanation_Node:
             # Add the node's descendents            
             for ss in self._children:
                 ss._add_node_and_descendents_to_list(nodes)
+
+
+    def _dfs(self, new_explanation, criteria, visited, parents, ignore):
+        """
+        Recursive function that returns a new explanation's parents.
+
+        Parameters
+        ----------
+        new_explanation : Explanation_Node
+            A new explanation.
+        criteria : TYPE
+            DESCRIPTION.
+        visited : set
+            Nodes that have been visited in the search (updated on exit).
+        parents : TYPE
+            The new explanation's parents (updated on exit).
+        ignore : list or int, optional
+            A node ID or list of IDs to ignore so they do not become the new explanation's parent. The default is None.
+
+        Returns
+        -------
+        found_parent : boolean
+            True (this node or one of it's descendents is a parent) or False.
+
+        """
+        found_parent = False
+        # Add this node to the visited set
+        visited.add(self)
+	
+        ## Loop over the children that have not been visited
+        #for cid in set(self._children) - visited:
+        # Loop over this node's children
+        for cid in set(self._children):
+            if cid in visited:
+                if cid in parents:
+                    # A previous visited child of this node is a parent
+                    found_parent = True
+            elif cid._dfs(new_explanation, criteria, visited, parents, ignore):
+                found_parent = True
+		
+        if not found_parent and self._id not in ignore:
+            # Check to see if this node is a parents
+            if self.is_intersect(new_explanation, criteria):
+                parents.add(self)
+                found_parent = True
+		
+        return found_parent
 
     
     def _set_node_level(self, level):

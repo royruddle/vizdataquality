@@ -22,7 +22,7 @@ classifiers = [
 ]
 
 [tool.poetry.dependencies]
-python = ">=3.9,<3.12"
+python = ">=3.9,<=3.13"
 numpy = "^1.24"
 pandas = "^2"
 tomli = "^2.0"

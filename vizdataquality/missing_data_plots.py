@@ -529,10 +529,15 @@ def plot_purity_heatmap(df_patterns, threshold=0.0, row_col_order=None, ax_input
         value = mdu._get_pattern_colournum(row[2], row[3])
         
         if value is not None:
-            df_heatmap.loc[row[0]][row[1]] = value
-            df_heatmap.loc[row[1]][row[0]] = value
-            df_purity.loc[row[0]][row[1]] = row[3]
-            df_purity.loc[row[1]][row[0]] = row[3]
+            # Fix for ISSUE #52
+            #df_heatmap.loc[row[0]][row[1]] = value
+            #df_heatmap.loc[row[1]][row[0]] = value
+            #df_purity.loc[row[0]][row[1]] = row[3]
+            #df_purity.loc[row[1]][row[0]] = row[3]
+            df_heatmap.loc[row[0], row[1]] = value
+            df_heatmap.loc[row[1], row[0]] = value
+            df_purity.loc[row[0], row[1]] = row[3]
+            df_purity.loc[row[1], row[0]] = row[3]
 
     legend = mdu._get_pattern_legend()
     

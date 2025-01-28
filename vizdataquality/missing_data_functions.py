@@ -375,10 +375,14 @@ def _get_intersections(columns, dict_displayedMissingCombs, record_intersection_
                 array[value][l2] = 0 if key[l2] == 'f' else 1
         
         # Create the dataframe
-        intersection_id_to_columns = pd.DataFrame(array, columns=columns)
+        #intersection_id_to_columns = pd.DataFrame(array, columns=columns)
 
         # Replace t/f with True/False (column is missing/present in that intersection)
-        intersection_id_to_columns.replace({0: False, 1: True}, inplace=True)
+        #intersection_id_to_columns.replace({0: False, 1: True}, inplace=True)
+
+        # ISSUE #51: Changed because of Pandas FutureWarning: Downcasting behavior in `replace` is deprecated
+        # Create the dataframe, changing 0/1 to boolean
+        intersection_id_to_columns = pd.DataFrame(array, columns=columns).astype(bool)
         
     # Rename the axis
     intersection_id_to_columns.rename_axis('intersection_id', inplace=True)

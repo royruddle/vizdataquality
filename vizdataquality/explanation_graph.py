@@ -57,7 +57,9 @@ class Explanation_Graph:
             # Values are 0 (column is not part of the intersection), -1 (it is but not yet in the graph) or 1 (in the graph; i.e., 'explained')
             # *** START EDIT
             #self._intersection_id_to_columns = intersection_id_to_columns.copy().astype('int64').replace(1, -1)
-            self._intersection_id_to_columns = intersection_id_to_columns.replace({False: 0, True:-1})
+            #self._intersection_id_to_columns = intersection_id_to_columns.replace({False: 0, True:-1})
+            # ISSUE #51: Changed back to this code because of Pandas FutureWarning: Downcasting behavior in `replace` is deprecated
+            self._intersection_id_to_columns = intersection_id_to_columns.copy().astype('int64').replace(1, -1)
             # Dictionary that flags whether each column is fully explained (for efficiency when adding nodes)
             self._columns_explained = {}
             

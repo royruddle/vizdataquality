@@ -1607,6 +1607,153 @@ def dot_whisker(data, number_of_variables_per_row=None, ax_input=None, vert=True
         _draw_fig(filename, overwrite)
 
 
+def line(data, option='show gaps', gap_threshold=1, ax_input=None, xlabels_rotate=0.0, filename=None, overwrite=False, fig_kw={}, ax_kw={}, **kwargs):
+    """
+    Create a line chart showing a data quality attribute (e.g., to show value counts for a discrete numerical variable).
+    The length of each bar can be adjusted to ensure that important perceptual differences are visible.
+
+    Parameters
+    ----------
+    data : series
+        Series containing the variable names (index) and data quality attribute to be plotted (e.g., number of missing values in each variable)
+    option : string
+        Component to plot ('show gaps', 'show missing' or 'interpolate'). The default is 'show gaps'
+    gap_threshold: int
+        Gaps larger than this threshold will be shown (only used if option is 'show gaps'). The default is 1.
+    ax_input: axis or None
+        Matplotlib axis. The default is None.
+    xlabels_rotate : float
+        Angle to rotate X axis labels by (only used if vert = True). The default is 0.0.
+    filename : string
+        None or a filename for the figure. The default is None.
+    overwrite : boolean
+        False (do not overwrite file; the default) or True (overwrite file if it exists). The default is False.
+    fig_kw : dictionary
+        Keyword arguments for a Matplotlib Figure object. The default is an empty dictionary.
+    ax_kw : dictionary
+        Keyword arguments for a Matplotlib Axes object. The default is an empty dictionary.
+    kwargs : dictionary
+        Keyword arguments for a Matplotlib Axes.plot and scatter objects
+
+    Returns
+    -------
+    None.
+
+    """
+    axkwargs = ax_kw.copy()
+    kw = kwargs.copy()
+
+    if 'color' not in kw:
+        # Use the first color
+        kw['color'] = plt.rcParams['axes.prop_cycle'].by_key()['color'][0]
+
+    # Plot the values in the input series/dataframe
+    if isinstance(data, pd.Series):
+        plotdata = data.sort_index()
+        name = plotdata.name
+    else:
+        plotdata = data.sort_values(by=data.columns[0])
+        name = plotdata.columns[1]
+        
+    #
+    # Plot axis
+    #
+    if ax_input is None:
+        fig, ax = plt.subplots()
+        fig.set(**fig_kw)
+    else:
+        ax = ax_input
+
+    if option == 'show gaps':
+        # Plot the data, showing gaps
+        if isinstance(plotdata, pd.Series):
+            pdata = pd.DataFrame(plotdata)
+            bi = True
+        else:
+            pdata = plotdata
+            bi = False
+            
+        x = None
+        y = None
+
+        for row in pdata.itertuples(index=bi):
+            # Iterate over the other items
+            if x is None:
+                x = [row[0]]
+                y = [row[1]]
+                
+            elif row[0] <= x[-1] + gap_threshold:
+                # This item is part of a continuous sequence
+                x.append(row[0])
+                y.append(row[1])
+            else:
+
+                if len(x) == 1:
+                    # Plot a point (the last item was discrete)
+                    ax.scatter(x, y, **kw)
+                elif len(x) >= 2:
+                    # Plot a polyline (the last item(s) were in a sequence)
+                    ax.plot(x, y, **kw)
+
+                x = [row[0]]
+                y = [row[1]]
+
+        # Plot any remaining data
+        if len(x) == 1:
+            # Plot a point
+            ax.scatter(x, y, **kw)
+        elif len(x) >= 2:
+            # Plot a polyline
+            ax.plot(x, y, **kw)
+    else:
+        
+        if option == 'interpolate':
+            # Plot the raw data
+            if isinstance(plotdata, pd.Series):
+                xx = plotdata.index
+                yy = plotdata.values
+            else:
+                xx = plotdata[plotdata.columns[0]]
+                yy = plotdata[plotdata.columns[1]]
+                
+        elif option == 'show missing':
+            # Plot the data, inserting zero for every item in the X-axis sequence that is missing values
+            # To do that, create a new dataframe that contains a row for every integer in the range xmin - xmax (inclusive)
+            # and set the count for the new integers to zero
+            
+            if isinstance(plotdata, pd.Series):
+                xmin = int(min(plotdata.index))
+                xmax = int(max(plotdata.index))
+                plotdata = pd.DataFrame(data={'X': [l1 for l1 in range(xmin, xmax+1)]}).merge(pd.DataFrame(plotdata).reset_index(names='X'), on='X', how='left').fillna(0)
+            else:
+                xmin = int(plotdata[plotdata.columns[0]].min())
+                xmax = int(plotdata[plotdata.columns[0]].max())
+                plotdata = pd.DataFrame(data={'X': [l1 for l1 in range(xmin, xmax+1)]}).merge(plotdata.rename(columns={plotdata.columns[0]: 'X'}), on='X', how='left').fillna(0)
+            
+            xx = plotdata['X']
+            yy = plotdata[plotdata.columns[1]]
+        
+        # Plot the data without showing any gaps
+        if len(xx) == 1:
+            # A single point
+            ax.scatter(xx, yy, **kw)
+        else:
+            # Line chart
+            ax.plot(xx, yy, **kw)
+        
+    # Set the default axis labels if none have been supplied as ax_kw
+    if 'xlabel' not in axkwargs:
+        axkwargs['xlabel'] = 'Value'
+
+    if 'ylabel' not in axkwargs:
+        axkwargs['ylabel'] = name
+
+    ax.set(**axkwargs)
+
+    if ax_input is None:
+        _draw_fig(filename, overwrite)
+
+
 def lollipop(data, number_of_variables_per_row=None, ax_input=None, vert=True, xlabels_rotate=0.0, datalabels=False, continuous_value_axis=True, filename=None, overwrite=False, fig_kw={}, ax_kw={}, **kwargs):
     """
     Create a lollipop plot (e.g., to show value counts for a variable)

@@ -21,7 +21,7 @@ def write_set_data(folder='', stem='', overwrite=False, variables=None, intersec
     Parameters
     ----------
     folder : string, optional
-        Folder to write the files to. The default is ''.
+        Folder to write the files to (the folder is created if it does not exist). The default is ''.
     stem : string, optional
         A stem for each filename. The default is ''.
     overwrite : boolean, optional
@@ -44,9 +44,11 @@ def write_set_data(folder='', stem='', overwrite=False, variables=None, intersec
 
     Returns
     -------
-    None.
+    boolean
+        True (the files were written) or False(an error occurred)
 
     """
+    ret = False
     names = ['_variables', '_intersections', '_degree', '_cardinality', '_records']
     ext = '.csv'
     outputs = [variables, intersections, degree, cardinality, records]
@@ -64,13 +66,27 @@ def write_set_data(folder='', stem='', overwrite=False, variables=None, intersec
                     print(filename)
                     error = True
 
+    if not error and folder != '' and not os.path.exists(folder):
+        # The folder does not exist, sp create it
+        try:
+            os.makedirs(folder)
+        except:
+            raise
+        
     # Write the files
     if not error:
         for l1 in range(len(names)):
             
             if outputs[l1] is not None:
-                filename = os.path.join(folder, stem + names[l1] + ext)
-                outputs[l1].to_csv(filename, **kwargs)
+                try:
+                    filename = os.path.join(folder, stem + names[l1] + ext)
+                    outputs[l1].to_csv(filename, **kwargs)
+                    ret = True
+                except:
+                    ret = False
+                    raise
+                    
+    return ret
 
 
 def read_set_data(folder='', stem='', variables=True, intersections=True, degree=True, cardinality=True, records=True, **kwargs):

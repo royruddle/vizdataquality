@@ -812,6 +812,12 @@ def plot_explanation_graph_diagram(graph, ax_input=None, node_positions={}, vert
     # See https://stackoverflow.com/questions/41267733/getting-the-coordinates-of-a-matplotlib-annotation-label-in-figure-coordinates
     fig.canvas.draw()
     
+    # Draw a box around the graph
+    ax.tick_params( bottom=False, left=False, labelbottom=False,labelleft=False)
+    
+    # This should allow axes settings to be overridden by a user
+    ax.set(**axkwargs)
+    
     # Calculate the coordinates of each annotation bbox
     coords = []
     
@@ -855,12 +861,6 @@ def plot_explanation_graph_diagram(graph, ax_input=None, node_positions={}, vert
                 yy = [y1, 0.5 * (coords[node_num_child][0][1] + coords[node_num_child][1][1])]
     
             ax.plot(xx, yy, **lkwargs)
-    
-    # Draw a box around the graph
-    ax.tick_params( bottom=False, left=False, labelbottom=False,labelleft=False)
-    
-    # This should allow axes settings to be overridden by a user
-    ax.set(**axkwargs)
     
     if ax_input is None:
         vdqp._draw_fig(filename, overwrite)

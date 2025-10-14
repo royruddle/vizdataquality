@@ -272,17 +272,22 @@ def plot_intersection_heatmap(data, row_col_order=None, ax_input=None, transpose
         ax.tick_params(which='minor', bottom=False, left=False)
     
     #
-    # Label each cell with its purity        
+    # Label each cell with its purity (code changed to address Issue #62 FutureWarning)    
     #
     if datalabels:
         # Loop over rows
-        for i in range(plotdata.shape[0]):
+        i = 0
+        #for i in range(plotdata.shape[0]):
+        for row in plotdata.itertuples(index=False):
             # Loop over columns
             for j in range(plotdata.shape[1]):
-                vv = plotdata.iloc[i][j]
+                #vv = plotdata.iloc[i][j]
+                vv = row[j]
                 
                 if pd.notnull(vv):
                     ax.text(j, i, int(vv), ha="center", va="center", color="w")
+                    
+            i += 1
         
     if ax_input is None:
         vdqp._draw_fig(filename, overwrite)

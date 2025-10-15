@@ -1,0 +1,5 @@
+Data type,Example value,Number of values,Number of zero values,Number of missing values,Number of unique values,Value lengths,Character patterns,Numeric percentiles,Datetime percentiles,Uniqueness,Data type conflict
+object,a,8,0,2,2,"1,5",a0,,,Binary/Missing,OK
+int64,0,10,1,0,10,"1,1",,"0.0,2.25,4.5,6.75,9.0",,All unique,OK
+float64,0.0,6,1,4,6,"3,3",,"0.0,0.125,0.25,0.375,0.5",,All unique,OK
+datetime64[ns],2000-01-01 00:00:00,8,0,2,8,"19,19",,,"2000-01-01T00:00:00.000000000,2001-10-01T18:00:00.000000000,2003-07-02T12:00:00.000000000,2005-04-02T06:00:00.000000000,2007-01-01T00:00:00.000000000",All unique,OK

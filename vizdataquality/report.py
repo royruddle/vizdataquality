@@ -442,7 +442,7 @@ class Report:
                     
                     fout.write('\n')
                 elif filetype == 'latex':
-                    fout.write('\documentclass{article}' + '\n')
+                    fout.write('\\documentclass{article}' + '\n')
                     
                     # Output the title, if there is one
                     for name, item in self.report.items():
@@ -472,7 +472,7 @@ class Report:
                                     vv = value
                                 elif filetype == 'latex':
                                     prefix = ''
-                                    vv = '\maketitle'
+                                    vv = '\\maketitle'
                                     suffix = ''
                                 else:
                                     prefix = 'TITLE '
@@ -489,7 +489,7 @@ class Report:
                                     prefix = '<' + tag + '>'
                                     suffix = '</' + tag + '>'
                                 elif filetype == 'latex':
-                                    pp = ['\section{', '\subsection{', '\subsubsection{']
+                                    pp = ['\\section{', '\\subsection{', '\\subsubsection{']
                                     prefix = pp[item['Level']-1] if item['Level'] <= len(pp) else pp[-1]
                                     suffix = '}'
                                 else:
@@ -569,18 +569,18 @@ class Report:
                                         pass
                                 elif filetype == 'latex':
                                     fout.write('\\begin{figure}' + position + '\n')
-                                    fout.write('  \includegraphics[width=\linewidth]{' + vv + '}' + '\n')
+                                    fout.write('  \\includegraphics[width=\\linewidth]{' + vv + '}' + '\n')
 
                                     # Add caption
                                     try:
-                                        prefix = '  \caption{'
+                                        prefix = '  \\caption{'
                                         suffix = '}'
                                         fout.write(prefix + item['Caption'] + suffix + '\n')
                                     except:
                                         pass
                                     
-                                    fout.write('  \label{' + label + '}' + '\n')
-                                    fout.write('\end{figure}' + '\n')
+                                    fout.write('  \\label{' + label + '}' + '\n')
+                                    fout.write('\\end{figure}' + '\n')
                                     fout.write('\n')
                                 else:
                                     # Output the filename of the figure
@@ -648,18 +648,18 @@ class Report:
                                 elif filetype == 'latex':
                                     if key == 'Table_file':
                                         fout.write('\\begin{table}' + position + '\n')
-                                        fout.write('  \includegraphics[width=\linewidth]{' + vv + '}' + '\n')
+                                        fout.write('  \\includegraphics[width=\\linewidth]{' + vv + '}' + '\n')
     
                                         # Add caption
                                         try:
-                                            prefix = '  \caption{'
+                                            prefix = '  \\caption{'
                                             suffix = '}'
                                             fout.write(prefix + item['Caption'] + suffix + '\n')
                                         except:
                                             pass
                                         
-                                        fout.write('  \label{tab:' + str(table_num) + '}' + '\n')
-                                        fout.write('\end{table}' + '\n')
+                                        fout.write('  \\label{tab:' + str(table_num) + '}' + '\n')
+                                        fout.write('\\end{table}' + '\n')
                                     else:
                                         tab_kw = table_kw.copy()
                                         # The possible keywords include position and label
@@ -699,7 +699,7 @@ class Report:
                     fout.write('</html>' + '\n')
                     fout.write('</body>' + '\n')
                 elif filetype == 'latex':
-                    fout.write('\end{document}' + '\n')
+                    fout.write('\\end{document}' + '\n')
                     
         except Exception:
             raise

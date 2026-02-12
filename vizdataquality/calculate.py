@@ -18,6 +18,7 @@ Created on Wed Jul 19 04:43:43 2023
    
 """
 
+import os
 import pandas as pd
 import numpy as np
 import sys
@@ -30,8 +31,162 @@ import traceback
 
 
 # =============================================================================
+# High-level convenience functions
+# =============================================================================
+def step1_datafile_stats(encoding_results=None, filename=None, df=None):
+    """
+    Get general statistics anf information about a datafile.
+
+    Parameters
+    ----------
+    encoding_results : dict
+        Dictionary containing a text file's 'encoding' and 'confidence' (e.g., from utils.detect_file_encoding()).
+    filename : str
+        Full pathname of datafile (default is None). Used to determine text file encoding.
+    df : DataFrame
+        The data (default is None). Used for the other statistics.
+
+    Returns
+    -------
+    DataFrame
+        DataFrame with the columns ['Statistic', 'Value']
+
+    """
+    data = []
+    
+    if encoding_results is not None:
+        data.append(['Encoding', encoding_results['encoding'] + ' (confidence=' + str(encoding_results['confidence']) + ')'])
+        
+    if filename is not None:
+        try:
+            file_info = os.stat(filename)
+            data.append(['Size (bytes)', file_info.st_size])
+        except:
+            raise
+    
+    if df is not None:
+        data.append(['Number of rows', df.shape[0]])
+        data.append(['Number of columns', df.shape[1]])
+        column_stats = calc(df, options={'Missing values': True})
+        data.append(['Number of blank values', column_stats['Number of missing values'].sum()])
+    
+    return pd.DataFrame(data, columns=['Statistic', 'Value'])
+
+
+def step1_issues(df):
+    """
+    Get Step 1 data quality issues. If none are detected then an empty DataFrame is returned.
+
+    Parameters
+    ----------
+    df : DataFrame
+        The data.
+
+    Returns
+    -------
+    DataFrame
+        DataFrame with the columns ['Data quality issue', 'Value or description'].
+
+    """
+    data = []
+    
+    missing_col_names = get_missing_column_names(df)
+    if len(missing_col_names) > 0:
+        data.append(['Number of missing column names', str(len(missing_col_names))])
+    
+    col_names_to_trim = get_column_names_to_trim(df)
+    if len(col_names_to_trim) > 0:
+        data.append(['Number of column names with leading/trailing spaces', str(len(col_names_to_trim))])
+    
+    num_empty_rows = get_num_empty_rows(df)
+    if num_empty_rows > 0:
+        data.append(['Number of empty rows', str(num_empty_rows)])
+    
+    num_empty_cols = get_num_empty_cols(df)
+    if num_empty_cols > 0:
+        data.append(['Number of empty columns', str(num_empty_cols)])
+    
+    extra_col = check_for_extra_column(df)
+    if extra_col:
+        data.append(['Extra column', "Occurs because every row ends with the separator (e.g., ',')"])
+    
+    
+    return pd.DataFrame(data, columns=['Data quality issue', 'Value or description'])
+
+
+# =============================================================================
 # Utility functions
 # =============================================================================
+def check_for_extra_column(df):
+    """
+    Check whether a dataframe ends with an extra (superfluous) column.
+
+    Parameters
+    ----------
+    df : DataFrame
+        The data.
+
+    Returns
+    -------
+    bool
+        True (there is an extra column) or False
+
+    """
+    num_values = df[df.columns[-1]].notnull().sum()
+    
+    ret = (num_values == 0) and (df.columns[-1] == 'Unnamed: ' + str(df.shape[1] - 1))
+    
+    return ret
+        
+        
+def get_column_names_to_trim(df):
+    """
+    Return a list of any column names that have leading and/or trailing spaces.
+
+    Parameters
+    ----------
+    df : DataFrame
+        The data.
+
+    Returns
+    -------
+    list
+        The names of any missing columns that should be trimmed.
+
+    """
+    col_names_to_trim = []
+    
+    for col in df.columns:
+        if len(col.strip()) < len(col):
+            col_names_to_trim.append(col)
+    
+    return col_names_to_trim
+        
+        
+def get_missing_column_names(df):
+    """
+    Return a list of the names Pandas has created for columns that had no name.
+
+    Parameters
+    ----------
+    df : DataFrame
+        The data.
+
+    Returns
+    -------
+    list
+        The names for any missing columns (an empty list if no column names are missing).
+
+    """
+    missing_col_names = []
+    
+    for l1 in range(len(df.columns)):
+        if df.columns[l1] == 'Unnamed: ' + str(l1):
+            missing_col_names.append(df.columns[l1])
+    
+    return missing_col_names
+        
+        
 def get_non_numeric_values(df):
     """
     Return a list of the unique, non-numeric values in a dataframe.
@@ -60,6 +215,44 @@ def get_non_numeric_values(df):
     nnv_list.sort()
     
     return nnv_list
+
+
+def get_num_empty_cols(df):
+    """
+    Calculate the number of columns that do not contain any values.
+
+    Parameters
+    ----------
+    df : DataFrame
+        The data.
+
+    Returns
+    -------
+    int
+        The number of columns that do not contain any values.
+
+    """
+    nvals = df.count()
+    
+    return len(nvals[nvals == 0])
+
+
+def get_num_empty_rows(df):
+    """
+    Calculate the number of rows that do not contain any values.
+
+    Parameters
+    ----------
+    df : DataFrame
+        The data.
+
+    Returns
+    -------
+    int
+        The number of rows that do not contain any values.
+
+    """
+    return len(df[df.isna().all(axis=1)])
 
 
 def get_value_lengths_examples(df):

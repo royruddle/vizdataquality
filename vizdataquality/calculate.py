@@ -21,6 +21,7 @@ Created on Wed Jul 19 04:43:43 2023
 import os
 import pandas as pd
 import numpy as np
+import numbers
 import sys
 
 import re
@@ -187,7 +188,7 @@ def get_missing_column_names(df):
     return missing_col_names
         
         
-def get_non_numeric_values(df):
+def get_non_numeric_values(df, convert_numbers=False):
     """
     Return a list of the unique, non-numeric values in a dataframe.
 
@@ -195,6 +196,8 @@ def get_non_numeric_values(df):
     ----------
     df : DataFrame
         The data.
+    convert_numbers : bool, optional
+        Whether to exclude numbers stored as strings. The default is False.
 
     Returns
     -------
@@ -206,9 +209,17 @@ def get_non_numeric_values(df):
     non_numeric_values = set()
 
     for col in df.columns:
-        for item in df[col].unique().tolist():
-            if pd.api.types.is_integer(item) == False:
-                non_numeric_values.add(item)
+        for item in df[col].dropna().unique().tolist():
+            if pd.api.types.is_numeric_dtype(item) == False:
+                
+                if convert_numbers:
+                    try:
+                        num = float(item)
+                    except:
+                        non_numeric_values.add(item)
+                        pass
+                else:
+                    non_numeric_values.add(item)
 
     # Convert the set to a sorted list
     nnv_list = list(non_numeric_values)
@@ -253,6 +264,90 @@ def get_num_empty_rows(df):
 
     """
     return len(df[df.isna().all(axis=1)])
+
+
+def get_df_extra_values(df1, df2, convert_numbers=False):
+    """
+    Return the values that are not in both data frames. Optionally, numbers may be converted so that 1 and 1.0 are considered to be the same as '1', and 1.1 is the same as '1.1', etc.
+
+    Parameters
+    ----------
+    df1 : DataFrame
+        A data frames.
+    df2 : DataFrame
+        A data frames.
+    convert_numbers : bool, optional
+        Whether to convert numbers to strings. The default is False.
+
+    Returns
+    -------
+    extra_values : set
+        A set of the values that are not in corresponding columns of both data frames. None is returned if the data frames do not have the same column names.
+
+    """
+    # Check the dataframes have the same columns
+    if df1.columns.tolist() == df2.columns.tolist():
+        extra_values = set()
+        
+        for col in df1.columns:
+            extra_values.update(get_series_extra_values(df1[col], df2[col], convert_numbers))
+            
+    else:
+        extra_values = None
+        
+    return extra_values
+
+
+def get_series_extra_values(series1, series2, convert_numbers=False):
+    """
+    Return the values that are not in both series. Optionally, numbers may be converted so that 1 and 1.0 are considered to be the same as '1', and 1.1 is the same as '1.1', etc.
+
+    Parameters
+    ----------
+    series1 : series
+        A series.
+    series2 : series
+        A series.
+    convert_numbers : bool, optional
+        Whether to convert numbers to strings. The default is False.
+
+    Returns
+    -------
+    extra_values : set
+        A set of the values that are not in both series.
+
+    """
+    slist = [series1, series2]
+
+    if convert_numbers is False or slist[0].dtype == slist[1].dtype:
+        # The series have the same data type
+        unique_col_values = [set(ss.dropna().unique().tolist()) for ss in slist]
+    else:
+        # The series have different data types and numbers are to be converted before comparing the series
+        unique_col_values = []
+
+        # Create a list of the converted unique values in each list
+        for ss in slist:
+            uu = ss.dropna().unique().tolist()
+
+            for l1 in range(len(uu)):
+                
+                if isinstance(uu[l1], numbers.Number):
+                    # Whole numbers (1, 1.0, etc) are stored as strings of integers (e.g., '1').
+                    # Other numbers are stored as strings of floats (e.g., '1.2')
+                    iu = int(uu[l1])
+                    uu[l1] = str(iu) if abs(iu - uu[l1]) <= 0.0 else str(uu[l1])
+                else:
+                    # Non-numeric values are not converted
+                    uu[l1] = uu[l1]
+
+            # Create a set of the converted values in this series
+            unique_col_values.append(set(uu))
+
+    # Find the extra values
+    extra_values = unique_col_values[0].symmetric_difference(unique_col_values[1])
+
+    return extra_values
 
 
 def get_value_lengths_examples(df):

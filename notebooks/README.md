@@ -12,9 +12,10 @@ Others create visualizations directly from a dataframe containing the dataset.
 - Visualizing numerical and datetime distributions with a [box plot](https://github.com/royruddle/vizdataquality/blob/main/notebooks/Box%20plot%20(numeric%2C%20date%20%26%20time).ipynb)
 - Visualizing [datetime distributions at multiple levels of detail](https://github.com/royruddle/vizdataquality/blob/main/notebooks/Datetime%20value%20distribution.ipynb)
 - Visualizing value lengths (the number of characters in values) with a [dot & whisker chart](https://github.com/royruddle/vizdataquality/blob/main/notebooks/Dot%20%26%20whisker%20(value%20lengths).ipynb)
-- Visualizing value counts (the number of times each value occurs in a variable) with a [lollipop chart](https://github.com/royruddle/vizdataquality/blob/main/notebooks/Lollipop%20(value%20counts).ipynb)
-- Visualizing value counts with a [stacked bar chart](https://github.com/royruddle/vizdataquality/blob/main/notebooks/Stacked%20bar%20chart%20(value%20counts).ipynb)
-- Visualizing value counts with a [line chart](https://github.com/royruddle/vizdataquality/blob/main/notebooks/Line%20chart%20(value%20counts).ipynb), showing any gaps in a sequence of values
+- Visualizing value counts (the number of times each value occurs in a variable) with
+  - [lollipop chart](https://github.com/royruddle/vizdataquality/blob/main/notebooks/Lollipop%20(value%20counts).ipynb)
+  - [stacked bar chart](https://github.com/royruddle/vizdataquality/blob/main/notebooks/Stacked%20bar%20chart%20(value%20counts).ipynb)
+  - [line chart](https://github.com/royruddle/vizdataquality/blob/main/notebooks/Line%20chart%20(value%20counts).ipynb), showing any gaps in a sequence of values
 - Displaying attributes such as data types in a [table](https://github.com/royruddle/vizdataquality/blob/main/notebooks/Table%20(data%20type%2C%20example%20value).ipynb)
 - Displaying attributes as [text](https://github.com/royruddle/vizdataquality/blob/main/notebooks/Text%20(data%20type).ipynb)
 - Visualizing numerical distributions with:
@@ -33,4 +34,5 @@ Others create visualizations directly from a dataframe containing the dataset.
 - Investigating [interwoven patterns of missing values](https://github.com/royruddle/vizdataquality/blob/main/notebooks/missing%20data%20structure%202.ipynb)
 - For large datasets, [reading data in chunks from a file](https://github.com/royruddle/vizdataquality/blob/main/notebooks/missing%20data%20from%20file.ipynb)
 - For saving your analysis, [importing and exporting](https://github.com/royruddle/vizdataquality/blob/main/notebooks/missing%20data%20import%20and%20export.ipynb)
+
 

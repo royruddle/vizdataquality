@@ -1,7 +1,7 @@
 [![Python Package](https://github.com/royruddle/vizdataquality/actions/workflows/main.yml/badge.svg)](https://github.com/royruddle/vizdataquality/actions/workflows/main.yml)
 # vizdataquality
 This is a Python package for visualizing data quality, and has two main parts. One is software that helps you comprehensively profile and investigate data quality using this six-step workflow:
-1. Look at your data (is anything obviously wrong?)
+1. Is anything obviously wrong (look at your data and any documentation)?
 2. Watch out for special values
 3. Is any data missing?
 4. Check each variable
@@ -45,4 +45,4 @@ The vizdataquality software is released under the Apache Licence, version 2.0. S
 The file missing_data_functions.py contains some code that has been derived from [setvis](https://pypi.org/project/setvis/), which uses the same licence as vizdataquality. The same person leads the development of both packages. 
 
 ## Acknowledgements
-The development of the vizdataquality software was supported by funding from the Engineering and Physical Sciences Research Council (EP/N013980/1; EP/R511717/1) and the Alan Turing Institute.
+The development of the vizdataquality software was supported by funding from the Engineering and Physical Sciences Research Council (EP/N013980/1; EP/R511717/1; EP/X029689/1) and the Alan Turing Institute.

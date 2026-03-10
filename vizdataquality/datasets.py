@@ -74,6 +74,15 @@ def get_dataset(option):
             data['Numeric' + str(l1)] = [x for x in range(0, 10)]
             
         df = pd.DataFrame.from_dict(data)
+    elif option == 'numeric 2':
+        # Four numerical variables, each with a different distribution
+        num_rows = 1000
+        data = {}
+        data['Random'] = np.random.random(size=num_rows)
+        data['Normal'] = np.random.normal(size=num_rows)
+        data['Exponential'] = np.random.exponential(scale=10.0, size=num_rows)
+        data['Bimodal'] = np.concatenate((np.random.normal(size=int(num_rows*3/4)), np.random.normal(loc=5.0, size=int(num_rows*1/4))))
+        df = pd.DataFrame.from_dict(data)       
     elif option == 'date 1':
         data = {}
         

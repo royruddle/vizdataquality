@@ -17,7 +17,10 @@ Others create visualizations directly from a dataframe containing the dataset.
 - Visualizing value counts with a [line chart](https://github.com/royruddle/vizdataquality/blob/main/notebooks/Line%20chart%20(value%20counts).ipynb), showing any gaps in a sequence of values
 - Displaying attributes such as data types in a [table](https://github.com/royruddle/vizdataquality/blob/main/notebooks/Table%20(data%20type%2C%20example%20value).ipynb)
 - Displaying attributes as [text](https://github.com/royruddle/vizdataquality/blob/main/notebooks/Text%20(data%20type).ipynb)
-- Visualizing numerical distributions with a [violin chart](https://github.com/royruddle/vizdataquality/blob/main/notebooks/Violin%20(value%20distribution).ipynb)
+- Visualizing numerical distributions with:
+  - [boxplot](https://github.com/royruddle/vizdataquality/blob/main/notebooks/Box%20plot%20(value%20distribution).ipynb)
+  - [histogram](https://github.com/royruddle/vizdataquality/blob/main/notebooks/Histogram%20(value%20distribution).ipynb)
+  - [violin chart](https://github.com/royruddle/vizdataquality/blob/main/notebooks/Violin%20(value%20distribution).ipynb)
 
 ## Report
 - [Create a report](https://github.com/royruddle/vizdataquality/blob/main/notebooks/Report.ipynb) while you investigate data quality and profile a dataset
@@ -30,3 +33,4 @@ Others create visualizations directly from a dataframe containing the dataset.
 - Investigating [interwoven patterns of missing values](https://github.com/royruddle/vizdataquality/blob/main/notebooks/missing%20data%20structure%202.ipynb)
 - For large datasets, [reading data in chunks from a file](https://github.com/royruddle/vizdataquality/blob/main/notebooks/missing%20data%20from%20file.ipynb)
 - For saving your analysis, [importing and exporting](https://github.com/royruddle/vizdataquality/blob/main/notebooks/missing%20data%20import%20and%20export.ipynb)
+

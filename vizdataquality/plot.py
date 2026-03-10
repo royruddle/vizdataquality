@@ -282,7 +282,7 @@ def plotgrid(tasktype, data, num_rows=None, num_cols=None, vert=True, xlabels_ro
     Parameters
     ----------
     tasktype : string
-        'datetime distribution', 'scalars' or 'value counts'
+        'boxraw', 'datetime distribution', 'histogram', 'scalars' or 'value counts'
     data : dataframe or series
         The data.
     num_rows : int, optional
@@ -322,7 +322,7 @@ def plotgrid(tasktype, data, num_rows=None, num_cols=None, vert=True, xlabels_ro
     -------
     None.
     """
-    if tasktype == 'datetime distribution' or tasktype == 'scalars' or tasktype == 'value counts':
+    if tasktype == 'boxraw' or tasktype == 'datetime distribution' or tasktype == 'histogram' or tasktype == 'scalars' or tasktype == 'value counts':
         axkwargs = ax_kw.copy()
         # Get size of data
         data_nrow = len(data)
@@ -402,12 +402,17 @@ def plotgrid(tasktype, data, num_rows=None, num_cols=None, vert=True, xlabels_ro
                     xlabrot = _get_parameter(xlabels_rotate, pnum)
 
                     # This check is made because the grid may contain more cells than there are dataframe columns
-                    if tasktype == 'scalars':
-                        scalar_bar(plotdata, ax_input=ax, vert=vert, xlabels_rotate=xlabrot, perceptual_threshold=perceptual_threshold, legend=legend, filename=filename, overwrite=overwrite, ax_kw=axkwargs, legend_kw={}, **kwargs)
-
+                    if tasktype == 'boxraw':
+                        boxplot_raw(plotdata, ax_input=ax, vert=vert, xlabels_rotate=xlabrot, ax_kw=axkwargs, **kwargs)
+                        cnum += 1
+                    elif tasktype == 'histogram':
+                        histogram(plotdata, perceptual_threshold=perceptual_threshold, ax_input=ax, vert=vert, xlabels_rotate=xlabrot, datalabels=datalabels, ax_kw=axkwargs, **kwargs)
+                        cnum += 1
+                    elif tasktype == 'scalars':
+                        scalar_bar(plotdata, ax_input=ax, vert=vert, xlabels_rotate=xlabrot, perceptual_threshold=perceptual_threshold, legend=legend, ax_kw=axkwargs, legend_kw={}, **kwargs)
                         cnum += 1
                     elif tasktype == 'datetime distribution':
-                        datetime_counts(plotdata, ax_input=ax, xlabels_rotate=xlabrot, component=comps[dnum], gap_threshold=gap_threshold, show_gaps=show_gaps, filename=filename, overwrite=overwrite, ax_kw=axkwargs, **kwargs)
+                        datetime_counts(plotdata, ax_input=ax, xlabels_rotate=xlabrot, component=comps[dnum], gap_threshold=gap_threshold, show_gaps=show_gaps, ax_kw=axkwargs, **kwargs)
 
                         if dnum < len(comps) - 1:
                             # Next component
@@ -417,7 +422,7 @@ def plotgrid(tasktype, data, num_rows=None, num_cols=None, vert=True, xlabels_ro
                             cnum += 1
                             dnum = 0
                     elif tasktype == 'value counts':
-                        lollipop(plotdata.value_counts(), ax_input=ax, vert=vert, xlabels_rotate=xlabrot, datalabels=datalabels, continuous_value_axis=continuous_value_axis, filename=filename, overwrite=overwrite, ax_kw=axkwargs, **kwargs)
+                        lollipop(plotdata.value_counts(), ax_input=ax, vert=vert, xlabels_rotate=xlabrot, datalabels=datalabels, continuous_value_axis=continuous_value_axis, ax_kw=axkwargs, **kwargs)
                         cnum += 1
 
                     # Increment the parameter number
@@ -443,12 +448,12 @@ def multiplot(plottype, data, perceptual_threshold=0.05, number_of_variables_per
     Parameters
     ----------
     plottype : string
-        'bar', 'box', 'dot-or-whisker', 'lollipop', 'stackedbar' or 'violin'
+        'bar', 'box', 'boxraw', 'dot-or-whisker', 'lollipop', 'stackedbar' or 'violin'
     data : dataframe (stackedbar or violinplot) or series (all plot types except stackedbar)
         'bar', 'box', 'dot-or-whisker': Series containing the variable names (index) and data quality attribute to be plotted (e.g., number of missing values in each variable)
         'lollipop': Series containing value counts.
         'stackedbar': Dataframe where each column is a bar and the index/rows are the stacks
-        'violin': The values of one (Series) or more columns (dataframe)
+        'violin', 'boxraw': The values of one (Series) or more columns (dataframe)
     perceptual_threshold : float
         Preceptual discontinuity threshold (0.0 - 1.0) or None
     number_of_variables_per_row : int
@@ -478,19 +483,19 @@ def multiplot(plottype, data, perceptual_threshold=0.05, number_of_variables_per
     legend_kw : dictionary
         Keyword arguments for a Matplotlib legend. Only used if plottype = 'bar'
     kwargs : dictionary
-        Keyword arguments for a Matplotlib Axes.bar (scalarbar), Axes.bxp (boxplot), Axes.scatter and Axes.errorbar (dot_whisker), Axes.scatter and Axes.plot (lollipop) or violinplot object (violin)
+        Keyword arguments for a Matplotlib Axes.bar (scalarbar), Axes.bxp (boxplot), Axes.boxplot (boxraw), Axes.scatter and Axes.errorbar (dot_whisker), Axes.scatter and Axes.plot (lollipop) or violinplot object (violin)
 
     Returns
     -------
     None.
 
     """
-    if isinstance(data, pd.DataFrame) and plottype != 'violin' and plottype != 'stackedbar':
+    if isinstance(data, pd.DataFrame) and plottype != 'boxraw' and plottype != 'stackedbar' and plottype != 'violin':
         print('** WARNING ** vizdataquality, plot.py, multiplot(): A dataframe cannot be used with a', plottype, 'plot')
-    elif plottype == 'bar' or plottype == 'box' or plottype == 'dot-or-whisker' or plottype == 'lollipop' or plottype == 'stackedbar' or plottype == 'violin':
+    elif plottype == 'bar' or plottype == 'box' or plottype == 'boxraw' or plottype == 'dot-or-whisker' or plottype == 'lollipop' or plottype == 'stackedbar' or plottype == 'violin':
         axkwargs = ax_kw.copy()
         # Calculate the number of rows/columns of plots
-        if plottype == 'violin' or plottype == 'stackedbar':
+        if plottype == 'boxraw' or plottype == 'stackedbar' or plottype == 'violin':
             if isinstance(data, pd.DataFrame):
                 # The dataframe columns are the violins/bars
                 num_subplots = int((data.shape[1] + number_of_variables_per_row - 1) / number_of_variables_per_row)
@@ -517,7 +522,7 @@ def multiplot(plottype, data, perceptual_threshold=0.05, number_of_variables_per
         if True:
             # This shouldn't be needed because "When subplots have a shared x-axis along a column, only the x tick labels of the bottom subplot are created". Similarly for the Y axis
             # Use a single label for each axis
-            if plottype == 'violin':
+            if plottype == 'boxraw' or plottype == 'violin':
                 default_axis_label = 'Value'
             elif plottype == 'lollipop' or plottype == 'stackedbar':
                 default_axis_label = 'Count'
@@ -566,19 +571,21 @@ def multiplot(plottype, data, perceptual_threshold=0.05, number_of_variables_per
             if plottype == 'bar':
                 # Add the legend to the first subplot
                 add_legend = legend if l1 == 0 else False
-                scalar_bar(data.iloc[start:end], perceptual_threshold=perceptual_threshold, number_of_variables_per_row=number_of_variables_per_row, ax_input=ax, vert=vert, xlabels_rotate=xlabels_rotate, datalabels=datalabels, legend=add_legend, filename=filename, overwrite=overwrite, ax_kw=axkwargs, legend_kw=legend_kw, **kwargs)
+                scalar_bar(data.iloc[start:end], perceptual_threshold=perceptual_threshold, number_of_variables_per_row=number_of_variables_per_row, ax_input=ax, vert=vert, xlabels_rotate=xlabels_rotate, datalabels=datalabels, legend=add_legend, ax_kw=axkwargs, legend_kw=legend_kw, **kwargs)
             elif plottype == 'box':
-                boxplot(data.iloc[start:end], number_of_variables_per_row=number_of_variables_per_row, ax_input=ax, vert=vert, xlabels_rotate=xlabels_rotate, filename=filename, overwrite=overwrite, ax_kw=axkwargs, **kwargs)
+                boxplot(data.iloc[start:end], number_of_variables_per_row=number_of_variables_per_row, ax_input=ax, vert=vert, xlabels_rotate=xlabels_rotate, ax_kw=axkwargs, **kwargs)
+            elif plottype == 'boxraw':
+                boxplot_raw(data[data.columns[start:end]], number_of_variables_per_row=number_of_variables_per_row, ax_input=ax, vert=vert, xlabels_rotate=xlabels_rotate, ax_kw=axkwargs, **kwargs)
             elif plottype == 'dot-or-whisker':
-                dot_whisker(data.iloc[start:end], number_of_variables_per_row=number_of_variables_per_row, ax_input=ax, vert=vert, xlabels_rotate=xlabels_rotate, filename=filename, overwrite=overwrite, ax_kw=axkwargs, **kwargs)
+                dot_whisker(data.iloc[start:end], number_of_variables_per_row=number_of_variables_per_row, ax_input=ax, vert=vert, xlabels_rotate=xlabels_rotate, ax_kw=axkwargs, **kwargs)
             elif plottype == 'lollipop':
-                lollipop(plotdata[start:end], number_of_variables_per_row=number_of_variables_per_row, ax_input=ax, vert=vert, xlabels_rotate=xlabels_rotate, datalabels=datalabels, continuous_value_axis=continuous_value_axis, filename=filename, overwrite=overwrite, ax_kw=axkwargs, **kwargs)
+                lollipop(plotdata[start:end], number_of_variables_per_row=number_of_variables_per_row, ax_input=ax, vert=vert, xlabels_rotate=xlabels_rotate, datalabels=datalabels, continuous_value_axis=continuous_value_axis, ax_kw=axkwargs, **kwargs)
             elif plottype == 'stackedbar':
                 # Add the legend to the first subplot
                 add_legend = legend if l1 == 0 else False
-                stacked_bar(data[data.columns[start:end]], perceptual_threshold=perceptual_threshold, number_of_variables_per_row=number_of_variables_per_row, ax_input=ax, vert=vert, xlabels_rotate=xlabels_rotate, clist=clist, datalabels=datalabels, legend=add_legend, filename=filename, overwrite=overwrite, ax_kw=axkwargs, legend_kw=legend_kw, **kwargs)
+                stacked_bar(data[data.columns[start:end]], perceptual_threshold=perceptual_threshold, number_of_variables_per_row=number_of_variables_per_row, ax_input=ax, vert=vert, xlabels_rotate=xlabels_rotate, clist=clist, datalabels=datalabels, legend=add_legend, ax_kw=axkwargs, legend_kw=legend_kw, **kwargs)
             elif plottype == 'violin':
-                violinplot(data[data.columns[start:end]], number_of_variables_per_row=number_of_variables_per_row, ax_input=ax, vert=vert, xlabels_rotate=xlabels_rotate, filename=filename, overwrite=overwrite, ax_kw=axkwargs, **kwargs)
+                violinplot(data[data.columns[start:end]], number_of_variables_per_row=number_of_variables_per_row, ax_input=ax, vert=vert, xlabels_rotate=xlabels_rotate, ax_kw=axkwargs, **kwargs)
 
         #
         # Plot keyword arguments
@@ -608,7 +615,7 @@ def scalar_bar(data, perceptual_threshold=0.05, number_of_variables_per_row=None
     perceptual_threshold : float
         Preceptual discontinuity threshold (0.0 - 1.0) or None. The default is 0.05.
     number_of_variables_per_row : int
-        None (plot all variables in one bar chart) or the number of variables to show in each row. The default is None.
+        None (plot all variables in one bar chart) or the number of variables to show (used by multiplot()). The default is None.
     ax_input: axis or None
         Matplotlib axis. The default is None.
     vert: boolean
@@ -724,7 +731,7 @@ def scalar_bar(data, perceptual_threshold=0.05, number_of_variables_per_row=None
             p = ax.barh(np.arange(num_bars_in_row), row_values, **kw)
 
         if datalabels:
-            # Draw axis labels  at the end of the bars
+            # Draw labels  at the end of the bars
             bar_labels = [str(data.values[i]) for i in range(len(data))]
 
             if num_bars_in_row > len(bar_labels):
@@ -838,7 +845,7 @@ def stacked_bar(data, perceptual_threshold=0.05, number_of_variables_per_row=Non
     perceptual_threshold : float
         Preceptual discontinuity threshold (0.0 - 1.0) or None. The default is 0.05.
     number_of_variables_per_row : int
-        None (plot all variables in one bar chart) or the number of variables to show in each row. The default is None.
+        None (plot all variables in one bar chart) or the number of variables to show (used by multiplot()). The default is None.
     ax_input: axis or None
         Matplotlib axis. The default is None.
     vert: boolean
@@ -1167,7 +1174,7 @@ def text(plotdata, number_of_variables_per_row=None, ax_input=None, legend=True,
     plotdata : series
         Series containing the variable names (index) and data quality attribute to be plotted (e.g., number of missing values in each variable)
     number_of_variables_per_row : int
-        None (plot all variables in one bar chart) or the number of variables to show in each row
+        None (plot all variables in one bar chart) or the number of variables to show (used by multiplot()). The default is None.
     ax_input: axis or None
         Matplotlib axis
     legend: boolean
@@ -1228,14 +1235,14 @@ def text(plotdata, number_of_variables_per_row=None, ax_input=None, legend=True,
 
 def boxplot(data, number_of_variables_per_row=None, ax_input=None, vert=True, xlabels_rotate=0.0, filename=None, overwrite=False, fig_kw={}, ax_kw={}, **kwargs):
     """
-    Create a box plot to show the distribution of numerical data.
+    Create a box plot using the supplied stats to show the distribution of numerical or date/time data.
 
     Parameters
     ----------
     data : series
-        Series containing the variable names (index) and data quality attribute to be plotted (e.g., number of missing values in each variable)
+        Series containing the variable names (index) and pre-computed boxplot stats (for each variable, a list defining [whislo, q1, med, q3, whishi]; see Matplotlib.bxp() for details)
     number_of_variables_per_row : int
-        None (plot all variables in one bar chart) or the number of variables to show in each row
+        None (plot all variables in one bar chart) or the number of variables to show (used by multiplot()). The default is None.
     ax_input: axis or None
         Matplotlib axis
     vert: boolean
@@ -1327,7 +1334,7 @@ def boxplot(data, number_of_variables_per_row=None, ax_input=None, vert=True, xl
         print('** WARNING ** vizdataquality, plot.py, boxplot(): No variables to be plotted.')
     elif vert:
         # Vertical boxes
-        ax.bxp(boxes, showfliers=False, vert=vert)
+        ax.bxp(boxes, showfliers=False)
         # Set the default axis labels if none have been supplied as ax_kw
         if 'xlabel' not in axkwargs:
             axkwargs['xlabel'] = 'Variable'
@@ -1346,7 +1353,7 @@ def boxplot(data, number_of_variables_per_row=None, ax_input=None, vert=True, xl
             ax.yaxis.set_major_formatter(mpl.dates.DateFormatter('%H:%M:%S'))
     else:
         # Horizontal boxes
-        ax.bxp(boxes, showfliers=False, vert=vert)
+        ax.bxp(boxes, showfliers=False, vert=vert)#orientation='horizontal')
         # Set the default axis labels if none have been supplied as ax_kw
         if 'xlabel' not in axkwargs:
             axkwargs['xlabel'] = data.name
@@ -1368,6 +1375,103 @@ def boxplot(data, number_of_variables_per_row=None, ax_input=None, vert=True, xl
         _draw_fig(filename, overwrite)
 
 
+def boxplot_raw(data, number_of_variables_per_row=None, ax_input=None, vert=True, xlabels_rotate=0.0, filename=None, overwrite=False, fig_kw={}, ax_kw={}, **kwargs):
+    """
+    Create a box plot from raw data to show the distribution of numerical data.
+
+    Parameters
+    ----------
+    data : series or dataframe
+        The values of a variable(s).
+    number_of_variables_per_row : int
+        None (plot all variables in one bar chart) or the number of variables to show (used by multiplot()). The default is None.
+    ax_input: axis or None
+        Matplotlib axis
+    vert: boolean
+        True (vertical bars; the default) or False (horizontal)
+    xlabels_rotate : float
+        Angle to rotate X axis labels by (only used if vert = True)
+    filename : string
+        None or a filename for the figure
+    overwrite : boolean
+        False (do not overwrite file; the default) or True (overwrite file if it exists)
+    fig_kw : dictionary
+        Keyword arguments for a Matplotlib Figure object
+    ax_kw : dictionary
+        Keyword arguments for a Matplotlib Axes object
+    kwargs : dictionary
+        Keyword arguments for a Matplotlib Axes.boxplot object
+
+    Returns
+    -------
+    None.
+
+    """
+    axkwargs = ax_kw.copy()
+    #
+    # Plot axis
+    #
+    if ax_input is None:
+        fig, ax = plt.subplots()
+        fig.set(**fig_kw)
+    else:
+        ax = ax_input
+    
+    # Remove any missing values
+    if isinstance(data, pd.Series):
+        plotdata = data.dropna().values
+        columns = [data.name]
+    else:
+        plotdata = [data[v].dropna().values for v in data.columns]
+        columns = data.columns.tolist()
+
+    if vert:
+        # Vertical boxes
+        ax.boxplot(plotdata, **kwargs)
+        # Set the default axis labels if none have been supplied as ax_kw
+        if 'xlabel' not in axkwargs:
+            axkwargs['xlabel'] = 'Variable'
+
+        if 'ylabel' not in axkwargs:
+            axkwargs['ylabel'] = 'Value'
+
+        ax.set(**axkwargs)
+        
+        if number_of_variables_per_row is not None:
+            # Set the X axis limit (including any dummy variables)
+            ax.set_xlim(0.5, number_of_variables_per_row + 0.5)
+
+        if abs(xlabels_rotate) > 0.0:
+            ax.tick_params('x', labelrotation=xlabels_rotate)
+
+        ax.set_xticks(range(1, len(columns)+1))
+        ax.set_xticklabels(columns, rotation=xlabels_rotate)
+    else:
+        # Horizontal boxes
+        ax.boxplot(plotdata, vert=vert, **kwargs) #orientation='horizontal'
+        # Set the default axis labels if none have been supplied as ax_kw
+        if 'xlabel' not in axkwargs:
+            axkwargs['xlabel'] = 'Value'
+
+        if 'ylabel' not in axkwargs:
+            axkwargs['ylabel'] = 'Variable'
+
+        ax.set(**axkwargs)
+        
+        if number_of_variables_per_row is not None:
+            # Set the X axis limit (including any dummy variables)
+            ax.set_ylim(0.5, number_of_variables_per_row + 0.5)
+
+        if abs(xlabels_rotate) > 0.0:
+            ax.tick_params('x', labelrotation=xlabels_rotate)
+
+        ax.set_yticks(range(1, len(columns)+1))
+        ax.set_yticklabels(columns)
+
+    if ax_input is None:
+        _draw_fig(filename, overwrite)
+
+
 def violinplot(data, number_of_variables_per_row=None, ax_input=None, vert=True, xlabels_rotate=0.0, filename=None, overwrite=False, fig_kw={}, ax_kw={}, **kwargs):
     """
     Create a violin plot to show the distribution of numerical data.
@@ -1377,7 +1481,7 @@ def violinplot(data, number_of_variables_per_row=None, ax_input=None, vert=True,
     data : series or dataframe
         The values to be plotted (each column is plotted separately)
     number_of_variables_per_row : int
-        None (plot all variables in one bar chart) or the number of variables to show in each row
+        None (plot all variables in one bar chart) or the number of variables to show (used by multiplot()). The default is None.
     ax_input: axis or None
         Matplotlib axis
     vert: boolean
@@ -1430,6 +1534,10 @@ def violinplot(data, number_of_variables_per_row=None, ax_input=None, vert=True,
             axkwargs['ylabel'] = 'Value'
 
         ax.set(**axkwargs)
+        
+        if number_of_variables_per_row is not None:
+            # Set the X axis limit (including any dummy variables)
+            ax.set_xlim(0.5, number_of_variables_per_row + 0.5)
 
         #if abs(xlabels_rotate) > 0.0:
         #    ax.tick_params('x', labelrotation=xlabels_rotate)
@@ -1445,12 +1553,124 @@ def violinplot(data, number_of_variables_per_row=None, ax_input=None, vert=True,
             axkwargs['ylabel'] = 'Variable'
 
         ax.set(**axkwargs)
+        
+        if number_of_variables_per_row is not None:
+            # Set the X axis limit (including any dummy variables)
+            ax.set_ylim(0.5, number_of_variables_per_row + 0.5)
 
         if abs(xlabels_rotate) > 0.0:
             ax.tick_params('x', labelrotation=xlabels_rotate)
 
         ax.set_yticks(range(1, len(columns)+1))
-        ax.set_yticklabels(columns)#, rotation=xlabels_rotate)
+        ax.set_yticklabels(columns)
+
+    if ax_input is None:
+        _draw_fig(filename, overwrite)
+
+
+def histogram(data, perceptual_threshold=0.05, ax_input=None, vert=True, xlabels_rotate=0.0, datalabels=False, filename=None, overwrite=False, fig_kw={}, ax_kw={}, **kwargs):
+    """
+    Create a histogram to show the distribution of numerical data.
+
+    Parameters
+    ----------
+    data : series, list or numpy array
+        The values to be plotted
+    perceptual_threshold : float
+        Preceptual discontinuity threshold (0.0 - 1.0) or None. The default is 0.05.
+    ax_input: axis or None
+        Matplotlib axis
+    vert: boolean
+        True (vertical bars; the default) or False (horizontal)
+    xlabels_rotate : float
+        Angle to rotate X axis labels by (only used if vert = True)
+    datalabels : boolean
+        Label each bin. The default is False.
+    filename : string
+        None or a filename for the figure
+    overwrite : boolean
+        False (do not overwrite file; the default) or True (overwrite file if it exists)
+    fig_kw : dictionary
+        Keyword arguments for a Matplotlib Figure object
+    ax_kw : dictionary
+        Keyword arguments for a Matplotlib Axes object
+    kwargs : dictionary
+        Keyword arguments for a Matplotlib hist object
+
+    Returns
+    -------
+    None.
+
+    """
+    axkwargs = ax_kw.copy()
+    #
+    # Plot axis
+    #
+    if ax_input is None:
+        fig, ax = plt.subplots()
+        fig.set(**fig_kw)
+    else:
+        ax = ax_input
+
+    # Allocate the kwargs to np.histogram and ax.stairs()
+    np_kw = {}
+    stairs_kw = {'fill': True}
+    
+    for key, value in kwargs.items():
+        if key in ['bins','range', 'density', 'weights']:
+            np_kw[key] = value
+        else:
+            stairs_kw[key] = value
+
+        
+    # Create the histogram
+    counts, bins = np.histogram(data, **np_kw)
+
+    if perceptual_threshold is None:
+        heights = counts
+    else:
+        # Apply perceptual discontinuity threshold so that non-zero bars are visible and almost complete variables do not look complete
+        pc = apply_perceptual_discontinuity_individually(pd.Series(counts), perceptual_threshold * max(counts))
+        heights = pc[['Perceptual discontinuity', 'Original number']].max(axis=1).values
+    
+    ax.stairs(heights, bins, orientation=('vertical' if vert else 'horizontal'), **stairs_kw)
+    
+    # Label the bins with the counts
+    if datalabels:
+        midbins = [(bins[l1] + bins[l1+1])/2.0 for l1 in range(len(bins) - 1)]
+        
+        for count, midbin, height in zip(counts, midbins, heights):
+            if count > 0:
+                if vert:
+                    ax.annotate(f'{count:.0f}', xy=(midbin, height), xytext=(0, 5), textcoords='offset points', ha='center')
+                else:
+                    ax.annotate(f'{count:.0f}', xy=(height, midbin), xytext=(5, 0), textcoords='offset points', va='center')
+             
+
+    if vert:
+        # Set the default axis labels if none have been supplied as ax_kw
+        if 'xlabel' not in axkwargs:
+            axkwargs['xlabel'] = 'Value'
+
+        if 'ylabel' not in axkwargs:
+            axkwargs['ylabel'] = 'Count'
+
+        ax.set(**axkwargs)
+
+        if abs(xlabels_rotate) > 0.0:
+            ax.tick_params('x', labelrotation=xlabels_rotate)
+    else:
+        # Set the default axis labels if none have been supplied as ax_kw
+        if 'xlabel' not in axkwargs:
+            axkwargs['xlabel'] = 'Count'
+
+        if 'ylabel' not in axkwargs:
+            axkwargs['ylabel'] = 'Value'
+
+        ax.set(**axkwargs)
+        
+        if abs(xlabels_rotate) > 0.0:
+            ax.tick_params('x', labelrotation=xlabels_rotate)
 
     if ax_input is None:
         _draw_fig(filename, overwrite)
@@ -1465,7 +1685,7 @@ def dot_whisker(data, number_of_variables_per_row=None, ax_input=None, vert=True
     data : series
         Series containing the variable names (index) and data quality attribute to be plotted (e.g., number of missing values in each variable)
     number_of_variables_per_row : int
-        None (plot all variables in one bar chart) or the number of variables to show in each row
+        None (plot all variables in one bar chart) or the number of variables to show (used by multiplot()). The default is None.
     ax_input: axis or None
         Matplotlib axis
     vert: boolean
@@ -1763,7 +1983,7 @@ def lollipop(data, number_of_variables_per_row=None, ax_input=None, vert=True, x
     data : series
         Value counts for a variable names.
     number_of_variables_per_row : int
-        None (plot all variables in one bar chart) or the number of variables to show in each row. The default is None.
+        None (plot all variables in one bar chart) or the number of variables to show (used by multiplot()). The default is None.
     ax_input: axis or None
         Matplotlib axis. The default is None.
     vert: boolean
@@ -1871,10 +2091,12 @@ def lollipop(data, number_of_variables_per_row=None, ax_input=None, vert=True, x
                 for l1 in range(len(dotx)):
                     ax.text(dotx[l1], doty[l1] + offset, str(doty[l1]), horizontalalignment='center', verticalalignment='bottom')
 
-            if numerical_values:
-                ax.set_xlim(plotdata.index.min()-0.5, plotdata.index.max()+0.5)
+            if numerical_values and 'xlim' not in axkwargs:
+                # By default Matplotlib extends axes 5% beyond the min/max data value
+                extend_axis = 0.05 * (plotdata.index.max() - plotdata.index.min())
+                ax.set_xlim(plotdata.index.min() - extend_axis, plotdata.index.max() + extend_axis)
                 ax.xaxis.set_major_locator(mpl.ticker.MaxNLocator(integer=True))
-            else:
+            elif not numerical_values:
                 # Just plot the series values on the X axis
                 #ax.set_xlim(-1, len(data))
                 ax.set_xlim(-0.5, num_values - 0.5)
@@ -1908,10 +2130,11 @@ def lollipop(data, number_of_variables_per_row=None, ax_input=None, vert=True, x
                 for l1 in range(len(dotx)):
                     ax.text(doty[l1] + offset, dotx[l1], str(doty[l1]), horizontalalignment='left', verticalalignment='center')
 
-            if numerical_values:
-                ax.set_ylim(plotdata.index.min()-0.5, plotdata.index.max()+0.5)
+            if numerical_values and 'xlim' not in axkwargs:
+                extend_axis = 0.05 * (plotdata.index.max() - plotdata.index.min())
+                ax.set_ylim(plotdata.index.min() - extend_axis, plotdata.index.max() + extend_axis)
                 ax.yaxis.set_major_locator(mpl.ticker.MaxNLocator(integer=True))
-            else:
+            elif not numerical_values:
                 # Just plot the series values on the X axis
                 #ax.set_ylim(-1, len(data))
                 ax.set_ylim(-0.5, num_values - 0.5)
@@ -2021,6 +2244,7 @@ def datetime_counts(data, component='raw data', gap_threshold=None, show_gaps=Tr
 
             xmin = value_counts['Value'].min()
             xmax = value_counts['Value'].max()
+            ymax = value_counts['Count'].max()
         else:
             # Plot a component (e.g., 'year')
             xmin = 0
@@ -2071,6 +2295,7 @@ def datetime_counts(data, component='raw data', gap_threshold=None, show_gaps=Tr
 
             # Calculate the number of times each value of Part occurs
             groups = value_counts.groupby('Part')['Count'].sum().sort_index()
+            ymax = groups.max()
 
         # Set the default axis labels if none have been supplied as ax_kw
         if 'xlabel' not in axkwargs:
@@ -2085,11 +2310,14 @@ def datetime_counts(data, component='raw data', gap_threshold=None, show_gaps=Tr
         else:
             ax = ax_input
 
+        # If axes are set in axkwargs then define them to span the whole X range and include Y=0
         if 'xlim' not in axkwargs:
-            axkwargs['xlim'] = (xmin, xmax)
+            # By default Matplotlib extends axes 5% beyond the min/max data value
+            extend_axis = 0.05 * (xmax - xmin)
+            axkwargs['xlim'] = (xmin - extend_axis, xmax + extend_axis)
 
         if 'ylim' not in axkwargs:
-            axkwargs['ylim'] = 0
+            axkwargs['ylim'] = (-0.05 * ymax, 1.05 * ymax)
 
         if 'ylabel' not in axkwargs:
             axkwargs['ylabel'] = 'Count'

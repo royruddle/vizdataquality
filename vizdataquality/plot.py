@@ -1353,7 +1353,7 @@ def boxplot(data, number_of_variables_per_row=None, ax_input=None, vert=True, xl
             ax.yaxis.set_major_formatter(mpl.dates.DateFormatter('%H:%M:%S'))
     else:
         # Horizontal boxes
-        ax.bxp(boxes, showfliers=False, orientation='horizontal')
+        ax.bxp(boxes, showfliers=False, vert=vert)#orientation='horizontal')
         # Set the default axis labels if none have been supplied as ax_kw
         if 'xlabel' not in axkwargs:
             axkwargs['xlabel'] = data.name
@@ -1448,7 +1448,7 @@ def boxplot_raw(data, number_of_variables_per_row=None, ax_input=None, vert=True
         ax.set_xticklabels(columns, rotation=xlabels_rotate)
     else:
         # Horizontal boxes
-        ax.boxplot(plotdata, orientation='horizontal', **kwargs)
+        ax.boxplot(plotdata, vert=vert, **kwargs) #orientation='horizontal'
         # Set the default axis labels if none have been supplied as ax_kw
         if 'xlabel' not in axkwargs:
             axkwargs['xlabel'] = 'Value'

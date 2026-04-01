@@ -87,7 +87,7 @@ class Report:
         int
             The key used for the step in the report dictionary.
         """
-        return self.add_heading('Step 1: Look at your data (is anything obviously wrong?)', text=text, key=key)
+        return self.add_heading('Step 1: Is anything obviously wrong (look at your data and any documentation)?', text=text, key=key)
     
     
     def step2(self, text=None, key=None):
@@ -228,9 +228,26 @@ class Report:
         int
             The key used for the heading in the report dictionary.
         """
-        self.num_items += 1
-        k = self.num_items if key is None else key
-        self.report[k] = {'Num': self.num_items, 'Heading': heading, 'Level': level, 'Text': text}
+        err = False
+
+        if not isinstance(level, int):
+            print("*** ERROR *** vizdataquality, report.py, add_heading(): The 'level' parameter' must be an integer.")
+            err = True
+
+        if text is not None and not isinstance(text, str):
+            print("*** ERROR *** vizdataquality, report.py, add_heading(): The 'text' parameter' must be None or a string.")
+            err = True
+
+        if key is not None and not isinstance(key, str):
+            print("*** ERROR *** vizdataquality, report.py, add_heading(): The 'key' parameter' must be None or a string.")
+            err = True
+
+        if err:
+            k = None
+        else:
+            self.num_items += 1
+            k = self.num_items if key is None else key
+            self.report[k] = {'Num': self.num_items, 'Heading': heading, 'Level': level, 'Text': text}
         
         return k
     
@@ -381,7 +398,7 @@ class Report:
         return k
         
         
-    def save(self, filename, overwrite=True, table_kw={}, **kwargs):
+    def save(self, filename, overwrite=True, table_kw={}, encoding='utf-8', **kwargs):
         """
         Save the report in a text format file.
     
@@ -393,6 +410,8 @@ class Report:
             DESCRIPTION. The default is True.
         table_kw : dictionary
             Keyword arguments for pd.DataFrame.to_html() or to_latex(). Default is an empty dictionary.
+        encoding : str
+            The file encoding. The default is 'utf-8'.
         **kwargs : dictionary
             Keyword arguments for open()
     
@@ -420,7 +439,10 @@ class Report:
             pass
             
         try:
-            with open(filename, 'w', **kwargs) as fout:
+            kargs = kwargs.copy()
+            kargs['encoding'] = encoding
+            
+            with open(filename, 'w', **kargs) as fout:
                 report_dir = os.path.dirname(filename)
                 dir_length = len(report_dir)
                 

@@ -99,6 +99,10 @@ def step1_issues(df):
     if len(col_names_to_trim) > 0:
         data.append(['Number of column names with leading/trailing spaces', str(len(col_names_to_trim))])
     
+    duplicate_header = check_for_duplicate_header(df)
+    if duplicate_header:
+        data.append(['Duplicate header', 'Some rows are the same as the column names'])
+        
     num_empty_rows = get_num_empty_rows(df)
     if num_empty_rows > 0:
         data.append(['Number of empty rows', str(num_empty_rows)])
@@ -118,6 +122,45 @@ def step1_issues(df):
 # =============================================================================
 # Utility functions
 # =============================================================================
+def check_for_duplicate_header(df):
+    """
+    Check whether a dataframe contains any rows that are the same as the header, ignoring any empty columns.
+
+    Parameters
+    ----------
+    df : DataFrame
+        The data.
+
+    Returns
+    -------
+    bool
+        True (the header row is duplicated) or False
+
+    """
+    # Count the number of non-null values in each column
+    count_values = df.notnull().sum()
+    # Omit any empty columns
+    usecols = count_values[count_values > 0].index.tolist()
+
+    df2 = pd.concat([df[usecols], pd.DataFrame([df.columns], columns=df.columns)[usecols]], ignore_index=True)
+
+    if df2.shape[1] > 0:
+        first_col = df2.columns[0]
+        df3 = df2[df2[first_col] == first_col]
+    
+        if len(df3) > 0:
+            df4 = df3.duplicated()
+            ret = df4.iloc[-1]
+        else:
+            # No values in the first column match the header
+            ret = False
+    else:
+        # All of the input dataframe's columns are empty
+        ret = False
+    
+    return ret
+
+
 def check_for_extra_column(df):
     """
     Check whether a dataframe ends with an extra (superfluous) column.

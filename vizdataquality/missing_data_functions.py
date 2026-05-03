@@ -399,7 +399,7 @@ def get_intersections_from_dataframe(df):
     Parameters
     ----------
     df : dataframe
-        The dataset.
+        The dataset, which must have an index from 0 to n-1.
 
     Returns
     -------
@@ -413,6 +413,9 @@ def get_intersections_from_dataframe(df):
         The 'intersection_id' (Index) of each record.
 
     """
+    if not np.array_equal(df.index, np.arange(0, len(df), 1)):
+        raise IndexError('In get_intersections_from_dataframe(df) the dataframe cannot be sliced. Try calling it with df.reset_index()')
+    
     columns, num_missing, dict_displayedMissingCombs, record_intersection_id = _compute_missingness_from_dataframe(df)
     intersection_id_to_columns, intersection_id_to_records = _get_intersections(columns, dict_displayedMissingCombs, record_intersection_id)
     

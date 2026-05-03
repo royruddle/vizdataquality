@@ -151,23 +151,24 @@ class Explanation_Graph:
                     self._nodelist[l1].add_child(self._nodelist[ii])
 
 
+    # ORIGINAL VERSION (produces FutureWarning in Pandas 2; see Issue #53) that is now redundant
+    #def _get_int_to_columns(self):
+    #    """
+    #    Get a dataframe that identifies the columns with missing data and intersections that involve missing data.
 
-    def _get_int_to_columns(self):
-        """
-        Get a dataframe that identifies the columns with missing data and intersections that involve missing data.
+    #    The values are:
+    #      - np.nan (column is not part of the intersection)
+    #      - False (it is but not yet in the graph)
+    #      - True (in the graph; i.e., 'explained')
 
-        The values are:
-          - np.nan (column is not part of the intersection)
-          - False (it is but not yet in the graph)
-          - True (in the graph; i.e., 'explained')
+    #    Returns
+    #    -------
+    #    DataFrame
+    #        A similar dataframe to _intersection_id_to_columns, but only contains columns with missing data and intersections that involve missing data.
 
-        Returns
-        -------
-        DataFrame
-            A similar dataframe to _intersection_id_to_columns, but only contains columns with missing data and intersections that involve missing data.
+    #    """
 
-        """
-        return self._intersection_id_to_columns.copy().replace({-1: False, 0: np.nan, 1: True}).dropna(axis='columns', how='all').dropna(axis=0, how='all')
+    #    return self._intersection_id_to_columns.copy().replace({-1: False, 0: np.nan, 1: True}).dropna(axis='columns', how='all').dropna(axis=0, how='all')
 
 
     def _set_node_y(self):
@@ -579,29 +580,51 @@ class Explanation_Graph:
             A list of the columns that are completely, partly or not explained by this graph.
 
         """
-        cols = None
-        #
-        # This function is based on get_summary()
-        #
-        int_to_columns = self._get_int_to_columns()
+        if True: # Suitable for Pandas 3
+            cat = category.lower()
+            cols = []
         
-        cat = category.lower()
-        # True if all values are 1
-        aa = 0
-        explain_all = int_to_columns.all(axis=aa)
-        completely = explain_all[explain_all].index.tolist()
+            # Loop over the columns
+            for col in self._intersection_id_to_columns.columns:
+                # Get the unique values, excluding 0 (part of an intersection)
+                values = set(self._intersection_id_to_columns[col].unique()).difference(set([0]))
         
-        if cat == 'completely explained':
-            cols = completely
-        else:
-            # True if any values are 1
-            explain_any = int_to_columns.any(axis=aa)
-            sany = set(explain_any[explain_any].index.tolist())
+                if cat == 'completely explained' and len(values) == 1 and 1 in values:
+                    # 1 indicates 'explained'
+                    cols.append(col)
+                elif cat == 'not explained' and len(values) == 1 and -1 in values:
+                    #-1 indicates 'not explained'
+                    cols.append(col)
+                elif cat == 'partly explained' and len(values) == 2 and len(values.difference(set([-1, 1]))) == 0:
+                    cols.append(col)
+        
+            if len(cols) == 0:
+                cols = None
+                
+        else: # ORIGINAL VERSION (produces FutureWarning in Pandas 2; see Issue #53)
+            cols = None
+            #
+            # This function is based on get_summary()
+            #
+            int_to_columns = self._get_int_to_columns()
             
-            if cat == 'partly explained':
-                cols = list(sany.difference(set(completely)))
-            elif cat == 'not explained':
-                cols = list(set(int_to_columns.columns.tolist()).difference(sany))
+            cat = category.lower()
+            # True if all values are 1
+            aa = 0
+            explain_all = int_to_columns.all(axis=aa)
+            completely = explain_all[explain_all].index.tolist()
+            
+            if cat == 'completely explained':
+                cols = completely
+            else:
+                # True if any values are 1
+                explain_any = int_to_columns.any(axis=aa)
+                sany = set(explain_any[explain_any].index.tolist())
+                
+                if cat == 'partly explained':
+                    cols = list(sany.difference(set(completely)))
+                elif cat == 'not explained':
+                    cols = list(set(int_to_columns.columns.tolist()).difference(sany))
             
         return cols
                 
@@ -621,45 +644,91 @@ class Explanation_Graph:
 
         """
         
-        data = {'Category': ['Completely explained', 'Partly explained', 'Not explained']}
-        # Get a dataframe that identifies the columns with missing data and intersections that involve missing data.
-        # Values are:
-        #   - np.nan (column is not part of the intersection)
-        #   - False (it is but not yet in the graph)
-        #   - True (in the graph; i.e., 'explained')
-        int_to_columns = self._get_int_to_columns()
-
-        # Rows (intersections) then columns
-        for aa in range(2):
-            # True if any values are 1
-            explain_any = int_to_columns.any(axis=aa)
-            # True if all values are 1
-            explain_all = int_to_columns.all(axis=aa)
-            num = int_to_columns.shape[1 if aa==0 else 0]
-
-            num_completely = len(explain_all[explain_all])
-            num_partly = len(explain_any[explain_any]) - num_completely
-
-            num_not = num - num_partly - num_completely
-            data['Variables' if aa == 0 else 'Combinations'] = [num_completely, num_partly, num_not]
-
-        # Dataframe with the same shape as int_to_columns, but values are
-        #   - np.nan (column is not part of the intersection)
-        #   - 0 (intersection is 'not explained')
-        #   - intersection cardinality (number of records; an 'explained' intersection)
-        df_num_explained = int_to_columns.mul(self._intersection_cardinality, axis=0).dropna(axis=0, how='all')
-        # Same as df_num_explained, but values are the intersection cardinality (column is part of the intersection) or np.nan
-        df_total_missing = int_to_columns.replace(False, True).mul(self._intersection_cardinality, axis=0).dropna(axis=0, how='all')
+        if True: # Suitable for Pandas 3
+            data = {'Category': ['Completely explained', 'Partly explained', 'Not explained']}
+            records_col = [None, None, None]
+            values_col = [None, 0, None]
+            iid2cols = self._intersection_id_to_columns
         
-        num_completely = df_num_explained.sum().sum()
-        num_not = df_total_missing.sum().sum() - num_completely
-        data['Values'] = [num_completely, 0.0, num_not]
+            # Loop over Variables and Combinations, calculating Records and Values while doing the latter
+            for pp in [['Variables', 0], ['Combinations', 1]]:
         
-        # NB: intersection_cardinality.sum() gives the number of rows in the dataset
-        num_completely = df_num_explained.min(axis=1).sum()
-        num_partly = df_num_explained.max(axis=1).sum() - num_completely
-        num_not = df_total_missing.max(axis=1).sum() - num_completely - num_partly
-        data['Records'] = [num_completely, num_partly, num_not]
+                if pp[0] == 'Combinations':
+                    dfminmax = pd.DataFrame({'Explained': iid2cols.replace(1, np.nan).isnull().sum(axis=pp[1]),
+                                             'Not': iid2cols.replace(-1, np.nan).isnull().sum(axis=pp[1]),
+                                             'Num records': self._intersection_cardinality})
+                else:
+                    dfminmax = pd.DataFrame({'Explained': iid2cols.replace(1, np.nan).isnull().sum(axis=pp[1]),
+                                             'Not': iid2cols.replace(-1, np.nan).isnull().sum(axis=pp[1])})
+                    
+                # Min is not -1 and Max is 1
+                dftmp = dfminmax[(dfminmax['Not'] == 0) & (dfminmax['Explained'] > 0)]
+                num_completely = len(dftmp)
+        
+                if pp[0] == 'Combinations':
+                    records_col[0] = dftmp['Num records'].sum()
+                    values_col[0] = (dfminmax['Explained'] * dfminmax['Num records']).sum()
+                    
+                # Min is -1 and Max is 1
+                dftmp = dfminmax[(dfminmax['Not'] > 0) & (dfminmax['Explained'] > 0)]
+                num_partly= len(dftmp)
+        
+                if pp[0] == 'Combinations':
+                    records_col[1] = dftmp['Num records'].sum()
+                    
+                # Min is -1 and Max is not 1
+                dftmp = dfminmax[(dfminmax['Not'] > 0) & (dfminmax['Explained'] == 0)]
+                num_not = len(dftmp)
+        
+                if pp[0] == 'Combinations':
+                    records_col[2] = dftmp['Num records'].sum()
+                    values_col[2] = (dfminmax['Not'] * dfminmax['Num records']).sum()
+        
+                data[pp[0]] = [num_completely, num_partly, num_not]
+        
+            data['Records'] = records_col
+            data['Values'] = values_col
+            
+        else: # ORIGINAL VERSION (produces FutureWarning in Pandas 2; see Issue #53)
+            data = {'Category': ['Completely explained', 'Partly explained', 'Not explained']}
+            # Get a dataframe that identifies the columns with missing data and intersections that involve missing data.
+            # Values are:
+            #   - np.nan (column is not part of the intersection)
+            #   - False (it is but not yet in the graph)
+            #   - True (in the graph; i.e., 'explained')
+            int_to_columns = self._get_int_to_columns()
+    
+            # Rows (intersections) then columns
+            for aa in range(2):
+                # True if any values are 1
+                explain_any = int_to_columns.any(axis=aa)
+                # True if all values are 1
+                explain_all = int_to_columns.all(axis=aa)
+                num = int_to_columns.shape[1 if aa==0 else 0]
+    
+                num_completely = len(explain_all[explain_all])
+                num_partly = len(explain_any[explain_any]) - num_completely
+    
+                num_not = num - num_partly - num_completely
+                data['Variables' if aa == 0 else 'Combinations'] = [num_completely, num_partly, num_not]
+    
+            # Dataframe with the same shape as int_to_columns, but values are
+            #   - np.nan (column is not part of the intersection)
+            #   - 0 (intersection is 'not explained')
+            #   - intersection cardinality (number of records; an 'explained' intersection)
+            df_num_explained = int_to_columns.mul(self._intersection_cardinality, axis=0).dropna(axis=0, how='all')
+            # Same as df_num_explained, but values are the intersection cardinality (column is part of the intersection) or np.nan
+            df_total_missing = int_to_columns.replace(False, True).mul(self._intersection_cardinality, axis=0).dropna(axis=0, how='all')
+            
+            num_completely = df_num_explained.sum().sum()
+            num_not = df_total_missing.sum().sum() - num_completely
+            data['Values'] = [num_completely, 0.0, num_not]
+            
+            # NB: intersection_cardinality.sum() gives the number of rows in the dataset
+            num_completely = df_num_explained.min(axis=1).sum()
+            num_partly = df_num_explained.max(axis=1).sum() - num_completely
+            num_not = df_total_missing.max(axis=1).sum() - num_completely - num_partly
+            data['Records'] = [num_completely, num_partly, num_not]
         
         cols = ['Category', 'Combinations', 'Records', 'Variables', 'Values']
         

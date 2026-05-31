@@ -497,7 +497,7 @@ class Report:
                 elif filetype == 'latex':
                     # Output documentclass, with keywords if they exist
                     try:
-                        fout.write(rf'\documentclass[{doc_kw['documentclass']}]' + '{article}' + '\n')
+                        fout.write(r'\documentclass[' + doc_kw['documentclass'] + ']' + '{article}' + '\n')
                     except:
                         fout.write(r'\documentclass{article}' + '\n')
                         pass
@@ -656,7 +656,7 @@ class Report:
                                             
                                     # Output the includegraphics line
                                     try:
-                                        fout.write(rf'  \includegraphics[{item['kwargs']['includegraphics']}]' + '{' + vv + '}' + '\n')
+                                        fout.write(r'  \includegraphics[' + item['kwargs']['includegraphics'] + ']' + '{' + vv + '}' + '\n')
                                     except:
                                         fout.write(r'  \includegraphics{' + vv + '}' + '\n')
                                         pass
@@ -750,7 +750,7 @@ class Report:
                                         
                                         # Output the includegraphics line
                                         try:
-                                            fout.write(rf'  \includegraphics[{item['kwargs']['includegraphics']}]' + '{' + vv + '}' + '\n')
+                                            fout.write(r'  \includegraphics[' + item['kwargs']['includegraphics'] + ']' + '{' + vv + '}' + '\n')
                                         except:
                                             fout.write(r'  \includegraphics{' + vv + '}' + '\n')
                                             pass

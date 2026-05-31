@@ -208,6 +208,29 @@ class Report:
         return k
     
     
+    def add_author(self, heading, key=None):
+        """
+        Add the supplied author to the report.
+    
+        Parameters
+        ----------
+        title : string
+            The author.
+        key : string
+            User-defined name of this report item. The default is None.
+    
+        Returns
+        -------
+        int
+            The key used for the author in the report dictionary.
+        """
+        self.num_items += 1
+        k = self.num_items if key is None else key
+        self.report[k] = {'Num': self.num_items, 'Author': heading}
+        
+        return k
+    
+    
     def add_heading(self, heading, level=1, text=None, key=None):
         """
         Add the supplied heading to the report.
@@ -252,7 +275,7 @@ class Report:
         return k
     
     
-    def dataset_size(self, name, num_rows, num_cols, text=None, caption=None, key=None):
+    def dataset_size(self, name, num_rows, num_cols, text=None, caption=None, key=None, table_kw={}, **kwargs):
         """
         Add a table summarising the size of a dataset to the report.
     
@@ -270,6 +293,10 @@ class Report:
             A caption for the table. The default is None.
         key : string
             User-defined name of this report item. The default is None.
+        table_kw : dictionary
+            Keyword arguments for pd.DataFrame.to_html() or to_latex() (e.g., {'position': 'ht'}). Default is an empty dictionary. Default is an empty dictionary.
+        kwargs
+            Keyword arguments for the figure. Only used for Latex (e.g., centering='', includegraphics='width=160mm').
     
         Returns
         -------
@@ -279,10 +306,10 @@ class Report:
         data = {'Dataset': [name], 'Number of rows': [num_rows], 'Number of columns': [num_cols]}
         df = pd.DataFrame.from_dict(data)
         cap = 'The size of the dataset.' if caption is None else caption
-        return self.add_table(df, index=False, text=text, caption=cap, key=key)
+        return self.add_table(df, index=False, text=text, caption=cap, key=key, table_kw=table_kw, **kwargs)
     
     
-    def add_descriptive_stats(self, df, text=None, caption=None, key=None):
+    def add_descriptive_stats(self, df, text=None, caption=None, key=None, table_kw={}, **kwargs):
         """
         Add descriptive statistics (e.g., calculated by calc() in calculate.py) to the report.
     
@@ -296,6 +323,10 @@ class Report:
             A caption for the table. The default is None.
         key : string
             User-defined name of this report item. The default is None.
+        table_kw : dictionary
+            Keyword arguments for pd.DataFrame.to_html() or to_latex() (e.g., {'position': 'ht'}). Default is an empty dictionary. Default is an empty dictionary.
+        kwargs
+            Keyword arguments for the figure. Only used for Latex (e.g., centering='', includegraphics='width=160mm').
     
         Returns
         -------
@@ -306,10 +337,10 @@ class Report:
         df2 = df.reset_index()
         df2.rename(columns={df2.columns[0]: 'Variable'}, inplace=True)
         cap = 'Descriptive statistics.' if caption is None else caption
-        return self.add_table(df2, index=False, text=text, caption=cap, key=key)
+        return self.add_table(df2, index=False, text=text, caption=cap, key=key, table_kw=table_kw, **kwargs)
     
     
-    def add_table(self, df=None, index=False, filename=None, text=None, caption=None, key=None):
+    def add_table(self, df=None, index=False, filename=None, text=None, caption=None, key=None, table_kw={}, **kwargs):
         """
         Add the supplied dataframe to the report.
     
@@ -327,6 +358,10 @@ class Report:
             A caption for the table. The default is None.
         key : string
             User-defined name of this report item. The default is None.
+        table_kw : dictionary
+            Keyword arguments for pd.DataFrame.to_html() or to_latex() (e.g., {'position': 'ht'}). Default is an empty dictionary. Default is an empty dictionary.
+        kwargs
+            Keyword arguments for the figure. Only used for Latex (e.g., centering='', includegraphics='width=160mm').
     
         Returns
         -------
@@ -336,11 +371,11 @@ class Report:
         if df is not None and df.shape[0] * df.shape[1] > 0:
             self.num_items += 1
             k = self.num_items if key is None else key
-            self.report[k] = {'Text': text, 'Table_df': df, 'Index': index, 'Caption': caption}
+            self.report[k] = {'Text': text, 'Table_df': df, 'Index': index, 'Caption': caption, 'table_kw': table_kw, 'kwargs': kwargs}
         elif filename is not None:
             self.num_items += 1
             k = self.num_items if key is None else key
-            self.report[k] = {'Text': text, 'Table_file': filename, 'Caption': caption}
+            self.report[k] = {'Text': text, 'Table_file': filename, 'Caption': caption, 'kwargs': kwargs}
         else:
             k = None
             print('** WARNING ** vizdataquality, report.py, add_table(): The input dataframe is empty.')
@@ -348,7 +383,7 @@ class Report:
         return k
     
     
-    def add_figure(self, filename, text=None, caption=None, key=None):
+    def add_figure(self, filename, text=None, caption=None, key=None, **kwargs):
         """
         Add the supplied figure to the report.
     
@@ -362,6 +397,8 @@ class Report:
             A caption for the table. The default is None.
         key : string
             User-defined name of this report item. The default is None.
+        kwargs
+            Keyword arguments for the figure. Only used for Latex (e.g., position='ht', centering='', includegraphics='width=160mm'). Default is an empty dictionary.
     
         Returns
         -------
@@ -370,7 +407,7 @@ class Report:
         """
         self.num_items += 1
         k = self.num_items if key is None else key
-        self.report[k] = {'Text': text, 'Figure': filename, 'Caption': caption}
+        self.report[k] = {'Text': text, 'Figure': filename, 'Caption': caption, 'kwargs': kwargs}
 
         return k
     
@@ -398,7 +435,7 @@ class Report:
         return k
         
         
-    def save(self, filename, overwrite=True, table_kw={}, encoding='utf-8', **kwargs):
+    def save(self, filename, overwrite=True, doc_kw={}, encoding='utf-8', **kwargs):
         """
         Save the report in a text format file.
     
@@ -408,8 +445,8 @@ class Report:
             DESCRIPTION. The default is filename.
         overwrite : TYPE, optional
             DESCRIPTION. The default is True.
-        table_kw : dictionary
-            Keyword arguments for pd.DataFrame.to_html() or to_latex(). Default is an empty dictionary.
+        doc_kw : dictionary
+            Keyword arguments for the document. Only used for Latex (e.g., documentclass='12pt', geometry='a4paper, margin=2.54cm'). Default is an empty dictionary.
         encoding : str
             The file encoding. The default is 'utf-8'.
         **kwargs : dictionary
@@ -428,12 +465,6 @@ class Report:
                 filetype = 'html'
             elif extension == '.tex':
                 filetype = 'latex'
-                # If 'position' is defined then it is also applied to the tables/figures that this function writes 
-                try:
-                    position = '[' + table_kw['position'] + ']'
-                except:
-                    position = ''
-                    pass
 
         except:
             pass
@@ -464,19 +495,39 @@ class Report:
                     
                     fout.write('\n')
                 elif filetype == 'latex':
-                    fout.write('\\documentclass{article}' + '\n')
+                    # Output documentclass, with keywords if they exist
+                    try:
+                        fout.write(r'\documentclass[' + doc_kw['documentclass'] + ']' + '{article}' + '\n')
+                    except:
+                        fout.write(r'\documentclass{article}' + '\n')
+                        pass
                     
-                    # Output the title, if there is one
+                    # Output the title and author if they exist
                     for name, item in self.report.items():
                         try:
-                            fout.write('\\title{' + item['Title'] + '}' + '\n')
-                            break
+                            fout.write(r'\title{' + item['Title'] + '}' + '\n')
                         except:
                             pass
                             
-                    fout.write('\\usepackage{booktabs} % Required for inserting tables' + '\n')
-                    fout.write('\\usepackage{graphicx} % Required for inserting images' + '\n')
-                    fout.write('\\begin{document}' + '\n')
+                        try:
+                            fout.write(r'\author{' + item['Author'] + '}' + '\n')
+                        except:
+                            pass
+                            
+                    fout.write('\n')
+                    fout.write(r'\usepackage{geometry} % Required to set page size, margins, etc' + '\n')
+                    fout.write(r'\usepackage{hyperref} % Required for hyperlinks and urls' + '\n')
+                    fout.write(r'\usepackage{booktabs} % Required for inserting tables' + '\n')
+                    fout.write(r'\usepackage{graphicx} % Required for inserting images' + '\n')
+                    
+                    # Output any doc_kw, apart from 'documentclass'
+                    for dockwkey, dockwvalue in doc_kw.items():
+                        
+                        if dockwkey not in ['documentclass']:
+                            fout.write(rf'\{dockwkey}' + '{' + dockwvalue + '}\n')
+                            
+                    fout.write('\n')
+                    fout.write(r'\begin{document}' + '\n')
                     fout.write('\n')
                     
                 table_num = 0
@@ -494,7 +545,7 @@ class Report:
                                     vv = value
                                 elif filetype == 'latex':
                                     prefix = ''
-                                    vv = '\\maketitle'
+                                    vv = r'\maketitle'
                                     suffix = ''
                                 else:
                                     prefix = 'TITLE '
@@ -511,7 +562,7 @@ class Report:
                                     prefix = '<' + tag + '>'
                                     suffix = '</' + tag + '>'
                                 elif filetype == 'latex':
-                                    pp = ['\\section{', '\\subsection{', '\\subsubsection{']
+                                    pp = [r'\section{', r'\subsection{', r'\subsubsection{']
                                     prefix = pp[item['Level']-1] if item['Level'] <= len(pp) else pp[-1]
                                     suffix = '}'
                                 else:
@@ -590,19 +641,34 @@ class Report:
                                     except:
                                         pass
                                 elif filetype == 'latex':
-                                    fout.write('\\begin{figure}' + position + '\n')
-                                    fout.write('  \\includegraphics[width=\\linewidth]{' + vv + '}' + '\n')
+                                    # Output the begin line, with position if defined
+                                    try:
+                                        fout.write(r'\begin{figure}' + '[' + item['kwargs']['position'] + ']\n')
+                                    except:
+                                        fout.write(r'\begin{figure}' + '\n')
+                                        pass
+                                    
+                                    # Output any kwargs, apart from 'position' and 'includegraphics'
+                                    for kwargskey in item['kwargs'].keys():
+                                        
+                                        if kwargskey not in ['position', 'includegraphics']:
+                                            fout.write(rf'  \{kwargskey}' + '\n')
+                                            
+                                    # Output the includegraphics line
+                                    try:
+                                        fout.write(r'  \includegraphics[' + item['kwargs']['includegraphics'] + ']' + '{' + vv + '}' + '\n')
+                                    except:
+                                        fout.write(r'  \includegraphics{' + vv + '}' + '\n')
+                                        pass
 
                                     # Add caption
                                     try:
-                                        prefix = '  \\caption{'
-                                        suffix = '}'
-                                        fout.write(prefix + item['Caption'] + suffix + '\n')
+                                        fout.write(r'  \caption{' + item['Caption'] + '}\n')
                                     except:
                                         pass
                                     
-                                    fout.write('  \\label{' + label + '}' + '\n')
-                                    fout.write('\\end{figure}' + '\n')
+                                    fout.write(r'  \label{' + label + '}' + '\n')
+                                    fout.write(r'\end{figure}' + '\n')
                                     fout.write('\n')
                                 else:
                                     # Output the filename of the figure
@@ -651,7 +717,7 @@ class Report:
                                         fout.write('<img src="' + vv + '">' + '\n')
                                         fout.write('\n')
                                     else:
-                                        tab_kw = table_kw.copy()
+                                        tab_kw = item['table_kw'].copy()
                                         # Use the internal value of Index
                                         tab_kw['index'] = item['Index']
                                         value.to_html(fout, **tab_kw)#, classes=['center'])
@@ -669,21 +735,36 @@ class Report:
                                         pass
                                 elif filetype == 'latex':
                                     if key == 'Table_file':
-                                        fout.write('\\begin{table}' + position + '\n')
-                                        fout.write('  \\includegraphics[width=\\linewidth]{' + vv + '}' + '\n')
+                                        # Output the begin line, with position if defined
+                                        try:
+                                            fout.write(r'\begin{table}' + '[' + item['kwargs']['position'] + ']\n')
+                                        except:
+                                            fout.write(r'\begin{table}' + '\n')
+                                            pass
+                                    
+                                        # Output any kwargs, apart from 'position' and 'includegraphics'
+                                        for kwargskey in item['kwargs'].keys():
+                                            
+                                            if kwargskey not in ['position', 'includegraphics']:
+                                                fout.write(rf'  \{kwargskey}' + '\n')
+                                        
+                                        # Output the includegraphics line
+                                        try:
+                                            fout.write(r'  \includegraphics[' + item['kwargs']['includegraphics'] + ']' + '{' + vv + '}' + '\n')
+                                        except:
+                                            fout.write(r'  \includegraphics{' + vv + '}' + '\n')
+                                            pass
     
                                         # Add caption
                                         try:
-                                            prefix = '  \\caption{'
-                                            suffix = '}'
-                                            fout.write(prefix + item['Caption'] + suffix + '\n')
+                                            fout.write(r'  \caption{' + item['Caption'] + '}\n')
                                         except:
                                             pass
                                         
-                                        fout.write('  \\label{tab:' + str(table_num) + '}' + '\n')
-                                        fout.write('\\end{table}' + '\n')
+                                        fout.write(r'  \label{tab:' + str(table_num) + '}' + '\n')
+                                        fout.write(r'\end{table}' + '\n')
                                     else:
-                                        tab_kw = table_kw.copy()
+                                        tab_kw = item['table_kw'].copy()
                                         # The possible keywords include position and label
                                         # Use the internal value of Index and Caption, and force the position of the table
                                         tab_kw['index'] = item['Index']
@@ -721,7 +802,7 @@ class Report:
                     fout.write('</html>' + '\n')
                     fout.write('</body>' + '\n')
                 elif filetype == 'latex':
-                    fout.write('\\end{document}' + '\n')
+                    fout.write(r'\end{document}' + '\n')
                     
         except Exception:
             raise

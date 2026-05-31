@@ -1,18 +1,23 @@
-\documentclass{article}
+\documentclass[12pt]{article}
 \title{Data quality issues and profiling of a car park fines dataset}
+
+\usepackage{geometry} % Required to set page size, margins, etc
+\usepackage{hyperref} % Required for hyperlinks and urls
 \usepackage{booktabs} % Required for inserting tables
 \usepackage{graphicx} % Required for inserting images
+\geometry{a4paper, margin=2.54cm}
+
 \begin{document}
 
 \maketitle
 
 \section{Introduction}
 
-This report has been produced by applying the vizdataquality package to investigate data quality of a dataset about fines that were issued for all of the car parks in a city, during a three month period. The data is (c) Leeds City Council, 2019, https://datamillnorth.org/dataset/v8ggw/off-street-parking-fines, and is licensed under the terms of the Open Government Licence (https://www.nationalarchives.gov.uk/doc/open-government-licence/version/2/).
+This report has been produced by applying the vizdataquality package to investigate data quality of a dataset about fines that were issued for all of the car parks in a city, during a three month period. The data is (c) Leeds City Council, 2019, \url{https://datamillnorth.org/dataset/v8ggw/off-street-parking-fines}, and is licensed under the terms of the Open Government Licence (\url{https://www.nationalarchives.gov.uk/doc/open-government-licence/version/2/}).
 
 The first five workflow steps investigate data quality and clean it in a structured manner. The 6th step profiled the cleaned data.
 
-\section{Step 1: Look at your data (is anything obviously wrong?)}
+\section{Step 1: Is anything obviously wrong (look at your data and any documentation)?}
 
 Each row of the data file ends with a comma, which produces an empty, unnamed column. That column has been removed in this step.
 
@@ -77,7 +82,8 @@ Balance & float64 & 0.000000 \\
 
 Figure~\ref{fig:1} shows that every variable is complete, but none are unique for every record.
 
-\begin{figure}[h!]
+\begin{figure}[ht]
+  \centering
   \includegraphics[width=\linewidth]{numvals_uniquevals.jpg}
   \caption{The number of values and unique values in each variable.}
   \label{fig:1}
@@ -85,31 +91,35 @@ Figure~\ref{fig:1} shows that every variable is complete, but none are unique fo
 
 Figure~\ref{fig:2} shows that 1430 PCNs occur once, and the other 2511 PCNs each occur 2 - 5 times.
 
-\begin{figure}[h!]
-  \includegraphics[width=\linewidth]{value_counts PCN.jpg}
+\begin{figure}[ht]
+  \centering
+  \includegraphics{value_counts_PCN.jpg}
   \caption{Number of occurrences of PCNs.}
   \label{fig:2}
 \end{figure}
 
 Figure~\ref{fig:3} shows that some car parks have only one or two records, whereas one car park has more than 1000.
 
-\begin{figure}[h!]
-  \includegraphics[width=\linewidth]{value_counts LOCATION.jpg}
+\begin{figure}[ht]
+  \centering
+  \includegraphics{value_counts_LOCATION.jpg}
   \caption{Number of records for each LOCATION.}
   \label{fig:3}
 \end{figure}
 
 Figure~\ref{fig:4} shows that Contravention 83 occurs in more records than all of the other contraventions put together, some of which only occur once or twice.
 
-\begin{figure}[h!]
-  \includegraphics[width=\linewidth]{value_counts CONTRAVENTION.jpg}
+\begin{figure}[ht]
+  \centering
+  \includegraphics{value_counts_CONTRAVENTION.jpg}
   \caption{Number of records for each CONTRAVENTION.}
   \label{fig:4}
 \end{figure}
 
 Figure~\ref{fig:5} shows that most issued dates are from the past two years, but a few are from 10 years ago.
 
-\begin{figure}[h!]
+\begin{figure}[ht]
+  \centering
   \includegraphics[width=\linewidth]{date_distribution_1.jpg}
   \caption{Distribution of ISSUED dates.}
   \label{fig:5}
@@ -117,7 +127,8 @@ Figure~\ref{fig:5} shows that most issued dates are from the past two years, but
 
 Figure~\ref{fig:6} shows that, as expected, all of the Last Pay Dates are in Jan - Mar 2019.
 
-\begin{figure}[h!]
+\begin{figure}[ht]
+  \centering
   \includegraphics[width=\linewidth]{date_distribution_2.jpg}
   \caption{Distribution of Last Pay Date dates.}
   \label{fig:6}
@@ -125,7 +136,8 @@ Figure~\ref{fig:6} shows that, as expected, all of the Last Pay Dates are in Jan
 
 Figure~\ref{fig:7} shows that FINE is 50 or 70 pounds, but there are many unexpected values of Total Paid and Balance.
 
-\begin{figure}[h!]
+\begin{figure}[ht]
+  \centering
   \includegraphics[width=\linewidth]{value_counts balance_fine_totalpaid.jpg}
   \caption{Value counts for the fine, total paid and balance.}
   \label{fig:7}

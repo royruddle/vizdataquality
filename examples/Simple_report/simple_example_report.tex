@@ -1,7 +1,11 @@
 \documentclass{article}
 \title{Example report for the missing 1 dataset}
+
+\usepackage{geometry} % Required to set page size, margins, etc
+\usepackage{hyperref} % Required for hyperlinks and urls
 \usepackage{booktabs} % Required for inserting tables
 \usepackage{graphicx} % Required for inserting images
+
 \begin{document}
 
 \maketitle
@@ -18,7 +22,7 @@ Use the paragraph() function to add additional general paragraphs of text.
 
 Table~\ref{tab:1} shows the number of rows and columns in the dataset.
 
-\begin{table}[h!]
+\begin{table}
 \caption{The size of the dataset.}
 \label{tab:1}
 \begin{tabular}{lrr}
@@ -32,7 +36,7 @@ missing 1 & 10000 & 5 \\
 
 Table~\ref{tab:2} shows descriptive statistics for each variable in the dataset.
 
-\begin{table}[h!]
+\begin{table}
 \caption{The data type, an example value and the number of missing values in of each variable.}
 \label{tab:2}
 \begin{tabular}{lllr}
@@ -50,8 +54,8 @@ E & float64 &  & 10000 \\
 
 Table~\ref{tab:3} shows the same descriptive statistics, but as an image.
 
-\begin{table}[h!]
-  \includegraphics[width=\linewidth]{table_desc_stats.jpg}
+\begin{table}
+  \includegraphics{table_desc_stats.jpg}
   \caption{The data type, an example value and the number of missing values in of each variable.}
   \label{tab:3}
 \end{table}
@@ -60,8 +64,8 @@ Table~\ref{tab:3} shows the same descriptive statistics, but as an image.
 
 Figure~\ref{fig:1} shows other descriptive statistics for each variable.
 
-\begin{figure}[h!]
-  \includegraphics[width=\linewidth]{fig_desc_stats.jpg}
+\begin{figure}
+  \includegraphics{fig_desc_stats.jpg}
   \caption{The number of values and number of unique values in each variable.}
   \label{fig:1}
 \end{figure}

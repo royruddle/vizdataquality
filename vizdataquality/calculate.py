@@ -231,13 +231,13 @@ def get_missing_column_names(df):
     return missing_col_names
         
         
-def get_non_numeric_values(df, convert_numbers=False):
+def get_non_numeric_values(data, convert_numbers=False):
     """
-    Return a list of the unique, non-numeric values in a dataframe.
+    Return a list of the unique, non-numeric values in a dataframe or series.
 
     Parameters
     ----------
-    df : DataFrame
+    data : DataFrame or Series
         The data.
     convert_numbers : bool, optional
         Whether to exclude numbers stored as strings. The default is False.
@@ -250,19 +250,36 @@ def get_non_numeric_values(df, convert_numbers=False):
     """
     # Create a set containing the non-numeric values
     non_numeric_values = set()
-
-    for col in df.columns:
-        for item in df[col].dropna().unique().tolist():
-            if pd.api.types.is_numeric_dtype(item) == False:
-                
-                if convert_numbers:
-                    try:
-                        num = float(item)
-                    except:
+    
+    if isinstance(data, pd.DataFrame):
+        df = data
+    
+        for col in df.columns:
+            for item in df[col].dropna().unique().tolist():
+                if pd.api.types.is_numeric_dtype(item) == False:
+                    
+                    if convert_numbers:
+                        try:
+                            num = float(item)
+                        except:
+                            non_numeric_values.add(item)
+                            pass
+                    else:
                         non_numeric_values.add(item)
-                        pass
-                else:
-                    non_numeric_values.add(item)
+                        
+    elif isinstance(data, pd.Series):
+            for item in data.dropna().unique().tolist():
+                if pd.api.types.is_numeric_dtype(item) == False:
+                    
+                    if convert_numbers:
+                        try:
+                            num = float(item)
+                        except:
+                            non_numeric_values.add(item)
+                            pass
+                    else:
+                        non_numeric_values.add(item)
+                        
 
     # Convert the set to a sorted list
     nnv_list = list(non_numeric_values)

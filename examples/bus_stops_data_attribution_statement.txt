@@ -1,0 +1,1 @@
+The bus stop data ('Bus%20stops%20NT%20%26%20NC.csv') is (c) Leeds City Council, [2017], https://datamillnorth.org/dataset/bus-stops-20z59. This information is licensed under the terms of the Open Government Licence."

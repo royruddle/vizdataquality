@@ -1,0 +1,1 @@
+The water meter readings data ('Domestic%20Consumption%20Monitor%20monthly%20meter%20readings%202010-2015.csv') is (c) Leeds City Council, [2017], https://datamillnorth.org/dataset/domestic-consumption-monitor-monthly-meter-readings-e51j7. This information is licensed under the terms of the Open Government Licence."

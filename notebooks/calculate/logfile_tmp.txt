@@ -1,0 +1,6 @@
+DATE	TIME	PATHNAME	FILENAME	LOGGER	LINE	LEVEL	MESSAGE
+06/06/2026	13:13:32	C:\Users\scsrar\Documents\vizdataquality\vizdataquality\calculate.py	calculate	vizdataquality	674	DEBUG	_profile_column(),column,String
+06/06/2026	13:13:32	C:\Users\scsrar\Documents\vizdataquality\vizdataquality\calculate.py	calculate	vizdataquality	808	DEBUG	_get_column_patterns()
+06/06/2026	13:13:32	C:\Users\scsrar\Documents\vizdataquality\vizdataquality\calculate.py	calculate	vizdataquality	674	DEBUG	_profile_column(),column,Integer
+06/06/2026	13:13:32	C:\Users\scsrar\Documents\vizdataquality\vizdataquality\calculate.py	calculate	vizdataquality	674	DEBUG	_profile_column(),column,Float
+06/06/2026	13:13:32	C:\Users\scsrar\Documents\vizdataquality\vizdataquality\calculate.py	calculate	vizdataquality	674	DEBUG	_profile_column(),column,Date

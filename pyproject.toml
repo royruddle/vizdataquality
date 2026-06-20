@@ -22,18 +22,18 @@ classifiers = [
 ]
 
 [tool.poetry.dependencies]
-python = ">=3.9,<3.14"
-numpy = ">=1.24,<2.4"
-pandas = ">=2.0,<=2.3.3"
-tomli = "^2.0"
-matplotlib = ">=3.7.2,<3.11"
+python = ">=3.13,<3.15"
+numpy = ">=2.3,<2.5"
+pandas = ">=2.3,<4.0"
+tomli = ">=2.3,<2.5"
+matplotlib = ">=3.10,<3.11"
+chardet = ">=7.0,<8.0"
 
 notebook = { version = "^6.4", optional = true }
 Sphinx = { version = "^7.0", optional = true }
 pydata-sphinx-theme = { version = "^0.14", optional = true }
 myst-parser = { version = "*", optional = true}
 pytest = { version = "^6.2", optional = true }
-chardet = "^5.2.0"
 
 [tool.poetry.extras]
 notebooks = ["notebook", "matplotlib"]

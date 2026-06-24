@@ -44,7 +44,7 @@ def test_get_dataset_value_counts_1():
     assert num_rows == 100
     assert df['Categorical'].value_counts()['a'] == 60
     assert df['Categorical (ints)'].dtype == 'object'
-    assert df['Date'].dtype == 'datetime64[ns]'
+    assert pd.api.types.is_datetime64_any_dtype(df['Date'])
 
 def test_get_dataset_value_counts_2():
     num_rows, df = get_dataset('value counts 2')

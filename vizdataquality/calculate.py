@@ -749,8 +749,9 @@ def _profile_column(series, options=None):
         if value_counts is None:
             value_counts = series.value_counts()
 
-        # Only output character pattern if the column is of type 'object' and has at least one value
-        if series.dtype == 'object' and len(value_counts) > 0:
+        # Only output character pattern if the column is of type 'object' or 'str' and has at least one value
+        #if series.dtype == 'object' and len(value_counts) > 0:
+        if pd.api.types.is_string_dtype(series.dtype) and len(value_counts) > 0:
             try:
                 # Output the patterns that are in the series. \d is used instead of [0-9]
                 regex_pat_list = [r' ', re.compile(r'[a-z]', flags=re.IGNORECASE), re.compile(r'\d'), re.compile(r'\.'), r'\-', r'/']
@@ -772,7 +773,8 @@ def _profile_column(series, options=None):
 
     if options is None or options.get('Numeric percentiles', False):
         
-        if np.issubdtype(series.dtype, np.number) and not np.issubdtype(series.dtype, np.datetime64):
+        # Edit for Pandas 3.0
+        if pd.api.types.is_numeric_dtype(series.dtype):
             qq = series.dropna().quantile([0.0, 0.25, 0.5, 0.75, 1.0]).values.tolist()
             output.append(','.join([str(x) for x in qq]))
         else:
@@ -780,7 +782,8 @@ def _profile_column(series, options=None):
     
     if options is None or options.get('Datetime percentiles', False):
         
-        if np.issubdtype(series.dtype, np.datetime64):
+        # Edit for Pandas 3.0
+        if pd.api.types.is_datetime64_dtype(series.dtype):
             # Get quantiles and convert them to strings
             qq = np.datetime_as_string(series.dropna().quantile([0.0, 0.25, 0.5, 0.75, 1.0]).values)
             # Convert the quantiles into comma-separated strings

@@ -17,7 +17,7 @@ def test_calc_with_dataframe_default_options():
 
     # Assert specific data type and value counts
     assert result.loc['A', 'Data type'] == 'int64'
-    assert result.loc['B', 'Data type'] == 'object'
+    assert result.loc['B', 'Data type'] in ('str', 'object')
     assert result.loc['A', 'Number of values'] == 3
     assert result.loc['B', 'Number of unique values'] == 3
 

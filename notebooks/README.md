@@ -46,6 +46,4 @@ A 7th notebook applies the 6-step method to:
 - Investigating [interwoven patterns of missing values](https://github.com/royruddle/vizdataquality/blob/main/notebooks/missingdatastructure/missing%20data%20structure%202.ipynb)
 - For large datasets, [reading data in chunks from a file](https://github.com/royruddle/vizdataquality/blob/main/notebooks/missingdatastructure/missing%20data%20from%20file.ipynb)
 - For saving your analysis, [importing and exporting](https://github.com/royruddle/vizdataquality/blob/main/notebooks/missingdatastructure/missing%20data%20import%20and%20export.ipynb)
-
-
-
+- Case study using an open [diabetes dataset](https://github.com/royruddle/vizdataquality/blob/main/notebooks/missingdatastructure/case_study_UCI_diabetes_dataset.ipynb)

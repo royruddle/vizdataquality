@@ -28,7 +28,7 @@ The package includes notebooks that show you how to:
 - Use each type of plot, e.g., [datetime value distribution](https://github.com/royruddle/vizdataquality/blob/main/notebooks/visualize/Datetime%20value%20distribution.ipynb)
 - [Create a report](https://github.com/royruddle/vizdataquality/blob/main/notebooks/report/Report.ipynb) while you investigate data quality and profile a dataset
 - [Apply the six-step workflow to an open parking fines dataset](https://github.com/royruddle/vizdataquality/blob/main/notebooks/workflow/Workflow%20(parking%20fines).ipynb)
-- [Investigate patterns and structures of missing data](https://github.com/royruddle/vizdataquality/blob/main/notebooks/missingdatastructure/missing%20data%20structure%202.ipynb)
+- [Investigate missing data patternsin the UCI diabetes dataset](https://github.com/royruddle/vizdataquality/blob/main/notebooks/missingdatastructure/case_study_UCI_diabetes_dataset.ipynb) and read the corresponding [PLOS One paper](https://doi.org/10.1371/journal.pone.0355400)
 - Apply the [6-step Data Quality Method](https://github.com/royruddle/6-step-data-quality-method):
 	- YouTube video that provides an [overview of the method](https://www.youtube.com/watch?v=qymfk1inGVg)
 	- [Step 1 notebook](https://github.com/royruddle/vizdataquality/blob/main/notebooks/workflow/Step_1_video.ipynb) and corresponding [Step 1 video](https://www.youtube.com/watch?v=m7zjU5ojoBo)
